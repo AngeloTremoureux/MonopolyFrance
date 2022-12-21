@@ -29,6 +29,7 @@
     "rxjs": "~7.5.0",
     "save": "^2.9.0",
     "sequelize": "^6.28.0",
+    "sequelize-auto-migrations-v2": "^1.2.1",
     "three": "^0.147.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
