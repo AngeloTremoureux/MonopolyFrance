@@ -11,9 +11,12 @@ import { RequestService } from 'src/app/shared/request.service';
 export class IndexComponent {
 
   game: Game;
+  router: string;
+  clicked: boolean = false;
 
   constructor(private requestService: RequestService) {
     this.game = Game.getGame();
+    this.router = 'index';
     this.game.setRequestService(this.requestService);
   }
 
@@ -24,6 +27,18 @@ export class IndexComponent {
       requestAnimationFrame(render);
       that.game.animate();
     }());
+  }
+
+  joinGame() {
+    this.router = 'join';
+  }
+
+  createGame() {
+    this.router = 'create';
+  }
+
+  joinGameApply() {
+    this.clicked = true;
   }
 
 }

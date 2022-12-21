@@ -21,13 +21,31 @@ app.use(express.static(distDir));
 // Init the server
 var server = app.listen(process.env.PORT || 8080, function () {
     var port = server.address().port;
-    console.log("App now running on port", port);
+    console.log("");
+    console.log("     /)  (\\");
+    console.log(".-._((,~~.))_.-,");
+    console.log(" `-.   @@   ,-'");
+    console.log("   / ,o--o. \\");
+    console.log("  ( ( .__. ) )");
+    console.log("   ) `----' (");
+    console.log("  /          \ hjw");
+    console.log(" /            \`97");
+    console.log("/              \\");
+    console.log("");
+    console.log("🏐----------------------------------------------------------🏐");
+    console.log("|                                                            |");
+    console.log("| ✅ - App backend now running. Visit http://localhost:" + port + "/" + " |");
+    console.log("|                                                            |");
+    console.log("🏐----------------------------------------------------------🏐");
+    console.log("");
 });
+
+
+var indexApi = require('./src/api/routes');
+app.use('/api', indexApi);
+
 
 /*  "/api/status"
  *   GET: Get server status
  *   PS: it's just an example, not mandatory
  */
-app.get("/api/status", function (req, res) {
-    res.status(200).json({ status: "UP" });
-});

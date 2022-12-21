@@ -1,13 +1,31 @@
 
-<div class="global-container">
-
-  <div class="board"></div>
-  <div class="buttons">
-    <div>
+<div class="board"></div>
+<div class="container-fluid">
+  <ng-template [ngIf]="router == 'index'">
+    <div class="buttons">
       <img src="assets/M.png">
-      <button class="button-19" (click)="joinGame()">Rejoindre une partie</button>
-      <button class="button-19" (click)="createGame()">Créer une partie</button>
+      <div class="row">
+        <div class="col-6">
+          <button class="button-19 w-100" (click)="joinGame()">Rejoindre une partie</button>
+        </div>
+        <div class="col-6">
+          <button class="button-19 w-100" (click)="createGame()">Créer une partie</button>
+        </div>
+      </div>
     </div>
-  </div>
+  </ng-template>
+  <ng-template [ngIf]="router == 'join'">
+    <div class="buttons">
+      <div class="row">
+        <img src="assets/M.png">
+        <div class="col-4">
+          <input type="text" placeholder="N° SALLE" #code [attr.disabled]="clicked ? true : null" [ngClass]="code.value.length == 0 ? '' : 'form__spaced'" class="form__input" maxlength="6">
+        </div>
+        <div class="col-8 my-auto">
+          <button class="button-19 w-100" [attr.disabled]="code.value.length == 6 ? null : true" (click)="joinGameApply()"><i [ngClass]="clicked ? 'fa fa-spinner fa-spin fa-fw' : ''" aria-hidden="true"></i> Rejoindre</button>
+        </div>
+      </div>
+    </div>
+  </ng-template>
 </div>
 

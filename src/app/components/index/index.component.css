@@ -37,14 +37,30 @@ h1 {
   /* animation: rotate 20s linear infinite; */
 }
 
-@keyframes rotate {
-  from {
-    transform: translate(-50%, -50%) rotate(0deg);
-  }
+.form__input[disabled] {
+  opacity: .7;
+}
 
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
+.form__input {
+  font-family: 'Roboto', sans-serif;
+  color: #333;
+  font-size: 2rem;
+  margin: 0 auto;
+  font-weight: bold;
+  text-align: center;
+  padding: 0.5rem 0.2rem;
+  border-radius: 0.2rem;
+  background-color: rgb(255, 255, 255);
+  border: none;
+  display: block;
+  border-bottom: 0.3rem solid transparent;
+  transition: all 0.3s;
+  width: 200px;
+  text-transform: uppercase;
+}
+
+.form__spaced {
+  letter-spacing: 6px;
 }
 
 .buttons {
@@ -53,6 +69,10 @@ h1 {
   left: 50%;
   transform: translate(-50%, -50%);
   text-align: center;
+}
+
+.button-19[disabled] {
+  opacity: .4;
 }
 
 .button-19 {
@@ -70,7 +90,6 @@ h1 {
   font-weight: 700;
   letter-spacing: .8px;
   line-height: 20px;
-  margin: 0 10px;
   outline: none;
   overflow: visible;
   padding: 13px 16px;
@@ -83,7 +102,6 @@ h1 {
   -webkit-user-select: none;
   vertical-align: middle;
   white-space: nowrap;
-  width: 45%;
 }
 
 .button-19:after {
