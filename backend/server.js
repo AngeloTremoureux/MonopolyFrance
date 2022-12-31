@@ -41,7 +41,7 @@ var server = app.listen(process.env.PORT || 8080, function () {
 });
 
 
-var indexApi = require('./src/api/routes');
+var indexApi = require('./api/routes');
 app.use('/api', indexApi);
 
 
