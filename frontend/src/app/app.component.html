@@ -1,1 +1,10 @@
-<router-outlet></router-outlet>
+<div *ngIf="status == 'DOWN'; else game">
+  <div class="container mt-3">
+    <div class="alert alert-danger">Erreur interne. Le serveur ne répond pas</div>
+  </div>
+</div>
+
+<ng-template #game>
+  <router-outlet></router-outlet>
+</ng-template>
+
