@@ -18,7 +18,7 @@ const io = new Server(server, {
 // Create new instance of the express server
 
 io.on("connection", (socket) => {
-  console.log("\x1b[0m[", socket.id, "]\x1b[1m\x1b[5m\x1b[32m", "Global  > Client connected")
+  console.log("\x1b[0m[", socket.id, "]\x1b[1m\x1b[5m\x1b[32m", "Global  > Client connected", "\x1b[0m")
   api_controller.manageSocket(socket);
 });
 
