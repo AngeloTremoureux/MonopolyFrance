@@ -1,18 +1,26 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { io, Socket } from "socket.io-client";
 
 @Injectable({
   providedIn: 'root'
 })
 
 export class RequestService {
-  private statusUrl = '/api/';
 
-  constructor(private http: HttpClient) { }
+  private socket: Socket;
+  private api = 'localhost:8080/api/';
 
-  // Get the status
+  constructor(private http: HttpClient) {
+    this.socket = io(":8080");
+  }
+
+  public getSocket() {
+    return this.socket;
+  }
+
   getData(url: string): Promise<void | any> {
-    return this.http.get(this.statusUrl + url)
+    return this.http.get(this.api + url)
       .toPromise()
       .then(response => response)
       .catch(this.error);

@@ -1,6 +1,6 @@
 import { Component, ViewEncapsulation } from '@angular/core';
-import { Game } from 'src/app/classes/game/game';
 import { RequestService } from 'src/app/shared/request.service';
+import { io, Socket } from "socket.io-client";
 
 @Component({
   selector: 'app-index',
@@ -10,23 +10,32 @@ import { RequestService } from 'src/app/shared/request.service';
 })
 export class IndexComponent {
 
-  game: Game;
   router: string;
   clicked: boolean = false;
+  socket: Socket;
 
   constructor(private requestService: RequestService) {
-    this.game = Game.getGame();
+    //this.game = Game.getGame();
     this.router = 'index';
-    this.game.setRequestService(this.requestService);
+    this.socket = requestService.getSocket();
+    console.log("constructed ")
+    this.socket.on("game_gameId_get", (data) => {
+      this.getGameId(data);
+    })
+    //this.game.setRequestService(this.requestService);
   }
 
   ngOnInit() {
     //document.body.appendChild(this.game.renderer.domElement);
-    const that = this;
-    (function render() {
-      requestAnimationFrame(render);
-      that.game.animate();
-    }());
+    // const that = this;
+    // this.socket.on("game_gameId_get", (data) => {
+    //   this.getGameId(data);
+    // });
+  }
+
+  getGameId(data: any) {
+    console.log(data);
+    this.clicked = false;
   }
 
   joinGame() {
@@ -37,8 +46,9 @@ export class IndexComponent {
     this.router = 'create';
   }
 
-  joinGameApply() {
+  joinGameApply(code: string) {
     this.clicked = true;
+    this.socket.emit("game_gameId_get", code);
   }
 
 }

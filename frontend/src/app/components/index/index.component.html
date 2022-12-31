@@ -19,12 +19,13 @@
       <div class="row">
         <img src="assets/M.png">
         <div class="col-4">
-          <input type="text" placeholder="N° SALLE" #code [attr.disabled]="clicked ? true : null" [ngClass]="code.value.length == 0 ? '' : 'form__spaced'" class="form__input" maxlength="6">
+          <input type="text" placeholder="N° SALLE" #code [attr.disabled]="clicked ? true : null" (input)="null" [ngClass]="code.value.length == 0 ? '' : 'form__spaced'" class="form__input" maxlength="6">
         </div>
         <div class="col-8 my-auto">
-          <button class="button-19 w-100" [attr.disabled]="code.value.length == 6 ? null : true" (click)="joinGameApply()"><i [ngClass]="clicked ? 'fa fa-spinner fa-spin fa-fw' : ''" aria-hidden="true"></i> Rejoindre</button>
+          <button class="button-19 w-100" [attr.disabled]="code.value.length == 6 ? null : true" (click)="joinGameApply(code.value)"><i [ngClass]="clicked ? 'fa fa-spinner fa-spin fa-fw' : ''" aria-hidden="true"></i> Rejoindre</button>
         </div>
       </div>
+      <button (click)="router = 'index'">retour</button>
     </div>
   </ng-template>
 </div>

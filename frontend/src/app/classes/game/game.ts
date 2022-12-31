@@ -39,6 +39,7 @@ export class Game {
    */
   private constructor() {
     Game.game = this;
+    console.log("okCC")
     this.scene = new THREE.Scene();
     this.scene2 = new THREE.Scene();
     this.scene3 = new THREE.Scene();
