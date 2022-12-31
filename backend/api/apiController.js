@@ -8,9 +8,13 @@ exports.manageSocket = async function(socket) {
     if (!code) return;
     receiveLog(socket, "game_gameId_get", code);
     const response = await dataManager.getGameByCode(code);
-
+    await sleep(500);
     emit(socket, "game_gameId_get", response);
   });
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function receiveLog(socket, receiveString, data) {
