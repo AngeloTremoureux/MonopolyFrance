@@ -1,0 +1,24 @@
+{
+  "name": "monopoly-france-backend",
+  "version": "0.0.0",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "private": true,
+  "dependencies": {
+    "body-parser": "^1.20.1",
+    "express": "^4.18.2",
+    "mysql2": "^2.3.3",
+    "ngx-socket-io": "^4.4.0",
+    "rxjs": "~7.5.0",
+    "save": "^2.9.0",
+    "sequelize": "^6.28.0",
+    "sequelize-auto-migrations-v2": "^1.2.1",
+    "tslib": "^2.3.0",
+    "zone.js": "~0.12.0"
+  },
+  "devDependencies": {
+    "sequelize-cli": "^6.5.2",
+    "typescript": "~4.8.2"
+  }
+}
