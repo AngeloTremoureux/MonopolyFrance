@@ -1,11 +1,24 @@
 
 // Use Express
 var express = require("express");
+var app = express();
+const http = require('http');
 // Use body-parser
 var bodyParser = require("body-parser");
+const { Server } = require("socket.io");
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: "http://localhost:4200",
+    methods: ["GET", "POST"]
+  }
+});
 
 // Create new instance of the express server
-var app = express();
+
+io.on("connection", (socket) => {
+  console.log(">⚡ Client connected:", socket.id)
+});
 
 // Define the JSON parser as a default way
 // to consume and produce data through the
@@ -19,7 +32,7 @@ var distDir = __dirname + "/dist/";
 app.use(express.static(distDir));
 
 // Init the server
-var server = app.listen(process.env.PORT || 8080, function () {
+server.listen(process.env.PORT || 8080, function () {
     var port = server.address().port;
     console.log("");
     console.log("     /)  (\\");

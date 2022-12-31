@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { io, Socket } from "socket.io-client";
 import { StatusService } from './shared/status.service';
 
 @Component({
@@ -9,8 +10,11 @@ import { StatusService } from './shared/status.service';
 export class AppComponent implements OnInit {
   title = 'node-express-angular';
   status = 'DOWN';
+  socket: Socket;
 
-  constructor(private statusService: StatusService) { }
+  constructor(private statusService: StatusService) {
+    this.socket = io(":8080");
+  }
 
   ngOnInit() {
     this.statusService
