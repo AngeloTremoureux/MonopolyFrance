@@ -1,0 +1,29 @@
+<div class="container-fluid">
+  <div id="login-box">
+    <form class="form-signin" [formGroup]="signupForm" (ngSubmit)="registerUser()">
+      <div class="left">
+        <h1>S'enregistrer</h1>
+        <input class="form-input" type="text" pattern="^[a-zA-Z-_0-9\$\:\@]*$" minlength="2" maxlength="16" (keyup)="resetForm($event)" formControlName="name" placeholder="Nom d'utilisateur" required />
+        <div class="error"></div>
+        <input class="form-input" type="email" formControlName="email" (keyup)="resetForm($event)" [email]="true" placeholder="Email" required />
+        <div class="error"></div>
+        <input class="form-input" type="password" minlength="6" maxlength="60" name="password" (keyup)="resetForm($event)" formControlName="password" placeholder="Mot de passe" required />
+        <div class="error"></div>
+        <input class="form-input" type="password" name="password2" (keyup)="resetForm($event)" formControlName="password2" placeholder="Re-tapez le mot de passe"
+          required />
+        <div class="error"></div>
+        <input type="submit" name="signup_submit" value="S'enregistrer" />
+      </div>
+
+      <div class="right">
+        <span class="loginwith text-black">S'enregistrer<br />avec un compte</span>
+        <div id="gSignIn"></div>
+        <div class="userContent"></div>
+        <button class="social-signin facebook"><i class="fa fa-facebook"></i> Facebook</button>
+        <button class="social-signin twitter"><i class="fa fa-twitter"></i> Twitter</button>
+        <button class="social-signin google"><i class="fa fa-google"></i> Google</button>
+      </div>
+      <div class="or"><span class="position-relative" style="z-index: 1">OU</span></div>
+    </form>
+  </div>
+</div>
