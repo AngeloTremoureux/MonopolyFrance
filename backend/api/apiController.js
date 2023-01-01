@@ -3,25 +3,27 @@ const dataManager = require('./src/data');
 
 // Listening Events SOCKET.IO
 
-exports.manageSocket = async function(socket) {
-  socket.onAny((eventName, ...args) => {
-    receiveLog(socket, eventName, args);
-  });
+exports.handleSocket = async function(socket) {
+  // Global Socket
+  socket.onAny((eventName, ...args) => receiveLog(socket, eventName, args) );
+  // Socket handler
   socket.on("game_gameId_get", async (code, callback) => {
     if (!code || !callback) return;
     const response = await dataManager.getGameByCode(code);
-    await sleep(500);
-    //emit(socket, "game_gameId_get", response);
-    callback({
-      response
-    });
+    //await sleep(500);
+    callback({ response });
   });
+
   socket.on("game_create", async (pseudo, callback) => {
     if (!pseudo || !callback) return;
     const sign = await dataManager.createGame(pseudo);
-    callback({
-      sign
-    });
+    callback({ sign });
+  });
+
+  socket.on("signup", async (data, callback) => {
+    if (!data || !callback) return;
+    const sign = await dataManager.createGame(pseudo);
+    callback({ sign });
   });
 }
 

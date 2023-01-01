@@ -2,7 +2,9 @@
   "name": "monopoly-france-backend",
   "version": "0.0.0",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "makemig": "makemigration --name",
+    "dbmig": "sequelize db:migrate"
   },
   "private": true,
   "dependencies": {

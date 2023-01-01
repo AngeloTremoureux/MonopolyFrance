@@ -14,6 +14,11 @@ module.exports = (sequelize, DataTypes) => {
       autoIncrement: true
     },
     username: DataTypes.STRING,
+    email: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    password: DataTypes.STRING,
     isOnline: {
       type: DataTypes.BOOLEAN,
       defaultValue: true

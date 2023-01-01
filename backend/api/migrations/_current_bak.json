@@ -369,15 +369,6 @@
                     "field": "username",
                     "seqType": "Sequelize.STRING"
                 },
-                "email": {
-                    "allowNull": true,
-                    "field": "email",
-                    "seqType": "Sequelize.STRING"
-                },
-                "password": {
-                    "field": "password",
-                    "seqType": "Sequelize.STRING"
-                },
                 "isOnline": {
                     "defaultValue": {
                         "value": true
@@ -427,5 +418,5 @@
             "indexes": []
         }
     },
-    "revision": 2
+    "revision": 1
 }
