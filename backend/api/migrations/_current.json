@@ -366,6 +366,7 @@
                     "seqType": "Sequelize.INTEGER"
                 },
                 "username": {
+                    "unique": true,
                     "field": "username",
                     "seqType": "Sequelize.STRING"
                 },
@@ -427,5 +428,5 @@
             "indexes": []
         }
     },
-    "revision": 2
+    "revision": 3
 }

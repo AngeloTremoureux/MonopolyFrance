@@ -46,8 +46,38 @@ exports.createGame = async function (username) {
     console.log("error", error);
     return null;
   }
-
 }
+
+exports.getPlayerByName = async function (username) {
+  if (!username) return;
+  try {
+    const Player = await Model.Player.findOne({
+      where: {
+        username: username
+      }
+    });
+    return Player;
+  } catch (error) {
+    return null;
+  }
+}
+
+exports.createPlayer = async function (username, email, password) {
+  try {
+    if (!username || !email || !password) throw "Erreur interne au serveur";
+    if (exports.getPlayerByName(username) != null) throw "Ce nom d'utilisateur est déjà prit";
+    const Player = await Model.Player.create({ username: username, email: email, password: password });
+    return { data: Player};
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+function handleError(error) {
+  const message = error.original ? "Une erreur est survenue (" + error.original.code + ")" : error;
+  return { error: true, message };
+}
+
 
 function jwtSign(Game, Player, Board) {
   const sign = {

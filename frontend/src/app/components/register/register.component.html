@@ -1,18 +1,39 @@
+<div *ngIf="globalError" class="alert alert-danger d-flex align-items-center" role="alert">
+  <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/></svg>
+  <div>
+    An example danger alert with an icon
+  </div>
+</div>
+
 <div class="container-fluid">
   <div id="login-box">
     <form class="form-signin" [formGroup]="signupForm" (ngSubmit)="registerUser()">
       <div class="left">
         <h1>S'enregistrer</h1>
-        <input class="form-input" type="text" pattern="^[a-zA-Z-_0-9\$\:\@]*$" minlength="2" maxlength="16" (keyup)="resetForm($event)" formControlName="name" placeholder="Nom d'utilisateur" required />
-        <div class="error"></div>
-        <input class="form-input" type="email" formControlName="email" (keyup)="resetForm($event)" [email]="true" placeholder="Email" required />
-        <div class="error"></div>
-        <input class="form-input" type="password" minlength="6" maxlength="60" name="password" (keyup)="resetForm($event)" formControlName="password" placeholder="Mot de passe" required />
-        <div class="error"></div>
-        <input class="form-input" type="password" name="password2" (keyup)="resetForm($event)" formControlName="password2" placeholder="Re-tapez le mot de passe"
-          required />
-        <div class="error"></div>
+        <div class="form-floating">
+          <input class="form-input form-control" type="text" pattern="^[a-zA-Z\-\_0-9\$\:\@]{3,17}$" placeholder="Nom d'utilisateur" minlength="2" maxlength="16" (keyup)="resetForm($event)" formControlName="name" required />
+          <div class="error"></div>
+          <label for="floatingInput">Nom d'utilisateur</label>
+
+        </div>
+        <div class="form-floating">
+          <input class="form-input form-control" type="email" formControlName="email" (keyup)="resetForm($event)" [email]="true" placeholder="Email" required />
+          <div class="error"></div>
+          <label for="floatingInput">Email</label>
+        </div>
+        <div class="form-floating">
+          <input class="form-input form-control" type="password" minlength="6" maxlength="60" name="password" (keyup)="resetForm($event)" formControlName="password" placeholder="Mot de passe" required />
+          <div class="error"></div>
+          <label for="floatingInput">Mot de passe</label>
+        </div>
+        <div class="form-floating">
+          <input class="form-input form-control" type="password" name="password2" (keyup)="resetForm($event)" formControlName="password2" placeholder="Re-tapez le mot de passe"
+            required />
+          <div class="error"></div>
+          <label for="floatingInput ">Répeter le mot de passe</label>
+        </div>
         <input type="submit" name="signup_submit" value="S'enregistrer" />
+        <br>
       </div>
 
       <div class="right">

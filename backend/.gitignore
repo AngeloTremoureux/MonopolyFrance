@@ -43,4 +43,4 @@ Thumbs.db
 
 # Custom
 src/environments/*
-credentials.json
+tokens/

@@ -1,5 +1,7 @@
 const Model = require('./models');
 const dataManager = require('./src/data');
+const CryptoJS = require('crypto-js');
+const token = require('./../tokens/tokens.json');
 
 // Listening Events SOCKET.IO
 
@@ -22,8 +24,14 @@ exports.handleSocket = async function(socket) {
 
   socket.on("signup", async (data, callback) => {
     if (!data || !callback) return;
-    const sign = await dataManager.createGame(pseudo);
-    callback({ sign });
+    const player = await dataManager.createPlayer(data.name, data.email, data.password);
+    if (player.data) {
+      callback({ success: true, data: player.data });
+    } else {
+      callback({ success: false, data: player });
+    }
+
+    //console.log(CryptoJS.HmacSHA256('password', token['ENCRYPT_KEY']).toString());
   });
 }
 

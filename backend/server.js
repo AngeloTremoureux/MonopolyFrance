@@ -14,7 +14,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
 // Create new instance of the express server
 
 io.on("connection", (socket) => {

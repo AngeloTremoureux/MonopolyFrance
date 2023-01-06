@@ -5,6 +5,8 @@ import { Socket } from "socket.io-client";
 import { AuthService } from 'src/app/shared/auth.service';
 import { RequestService } from 'src/app/shared/request.service';
 import { MustMatch } from 'src/app/helpers/must-match.validator';
+import { environment } from 'src/environments/environment';
+import * as CryptoJS from 'crypto-js';
 
 const ERROR_MESSAGES: any = {
   required: 'Ce champ doit être renseigné',
@@ -24,8 +26,7 @@ export class RegisterComponent {
 
   private socket: Socket;
   public signupForm: FormGroup;
-  private regexUsername = new RegExp("^[a-zA-Z-_0-9\$\:\@]{0,16}$");
-  private regexEmail = /^[\w\-\.]+\@([\w\-]+\.)+[\w\-]{2,4}$/;
+  globalError: string|null = null;
 
   constructor(
     private requestService: RequestService,
@@ -35,7 +36,7 @@ export class RegisterComponent {
   ) {
     this.socket = requestService.getSocket();
     this.signupForm = this.fb.group({
-      name: ['Angelo'],
+      name: ['AngeloTMX'],
       email: ['angelo@gmail.com'],
       password: ['password'],
       password2: ['password']
@@ -52,24 +53,35 @@ export class RegisterComponent {
 
   registerUser() {
     if (this.signupForm.valid) {
-      this.socket.emit("signup", this.signupForm.value, (response: any) => {
+      this.globalError = null;
+      const sendData = {
+        name: this.signupForm.value['name'],
+        email: this.signupForm.value['email'],
+        password: CryptoJS.HmacSHA256(this.signupForm.value['password'], environment.ENCRYPT_KEY).toString(),
+      }
+      this.socket.emit("signup", sendData, (response: any) => {
         console.log(response);
+        if (response.success == false) {
+          this.globalError = "Erreur : " + response.data.message;
+        }
       });
     } else {
       const forms = document.getElementsByClassName("form-input");
       Object.keys(this.signupForm.controls).forEach((key) => {
         const el = this.signupForm.controls[key];
         if (el.errors) {
-          console.log(key, el.errors);
+          console.log("error for " + key)
           const element = Array.from(forms).find(x => x.getAttribute('formControlName') == key);
-          element?.classList.add("error");
+          console.log(element);
+          element?.classList.add("is-invalid");
           const name: any = Object.keys(el.errors)[0];
           if (element) {
             element.nextElementSibling ? element.nextElementSibling.textContent = ERROR_MESSAGES[name] : null;
           }
         } else {
+          console.log("no error for " + key)
           const element = Array.from(forms).find(x => x.getAttribute('formControlName') == key);
-          element?.classList.remove("error");
+          element?.classList.remove("is-invalid");
           if (element) {
             element.nextElementSibling ? element.nextElementSibling.textContent = null : null;
           }
@@ -77,13 +89,5 @@ export class RegisterComponent {
         return false;
       });
     }
-  }
-
-  validateName(name: string) {
-    return name.length == 0 ? true : this.regexUsername.test(name);
-  }
-
-  validateEmail(email: string) {
-    return email.length == 0 ? true : this.regexEmail.test(email);
   }
 }
