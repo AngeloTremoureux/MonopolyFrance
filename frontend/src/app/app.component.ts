@@ -1,6 +1,6 @@
 import { Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { io, Socket } from "socket.io-client";
-import { RequestService } from './shared/request.service';
+import { SocketService } from './services/socket/socket.service';
 
 @Component({
   selector: 'app-root',
@@ -11,8 +11,8 @@ import { RequestService } from './shared/request.service';
 export class AppComponent implements OnInit {
   status = 'DOWN';
 
-  constructor(private requestService: RequestService) {
-    const socket: Socket = requestService.getSocket();
+  constructor(private socketService: SocketService) {
+    const socket: Socket = socketService.socket;
     if (socket) {
       socket.on("connect", () => {
         this.status = "UP";

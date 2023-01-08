@@ -7,9 +7,7 @@ import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { IndexComponent } from './components/index/index.component';
 import { JoinComponent } from './components/join/join.component';
-import { CreateComponent } from './components/create/create.component';
 import { LobbyComponent } from './components/lobby/lobby.component';
-import { AuthInterceptor } from './interceptors/auth.interceptor';
 import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 
@@ -18,7 +16,6 @@ import { RegisterComponent } from './components/register/register.component';
     AppComponent,
     IndexComponent,
     JoinComponent,
-    CreateComponent,
     LobbyComponent,
     LoginComponent,
     RegisterComponent
@@ -29,11 +26,6 @@ import { RegisterComponent } from './components/register/register.component';
     HttpClientModule,
     ReactiveFormsModule
   ],
-  providers: [{
-    provide: HTTP_INTERCEPTORS,
-    useClass: AuthInterceptor,
-    multi: true
-  }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { RequestService } from 'src/app/shared/request.service';
+import { SocketService } from 'src/app/services/socket/socket.service';
 
 @Component({
   selector: 'app-join',
@@ -10,10 +10,8 @@ export class JoinComponent {
   clicked: boolean = false;
   socket: any;
 
-  constructor(private requestService: RequestService) {
-    //this.game = Game.getGame();
-    this.socket = requestService.getSocket();
-    //this.game.setRequestService(this.requestService);
+  constructor(private socketService: SocketService) {
+    this.socket = this.socketService.socket;
   }
 
   joinGameApply(code: string) {

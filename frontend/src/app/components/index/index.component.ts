@@ -1,7 +1,5 @@
 import { Component, ViewEncapsulation } from '@angular/core';
-import { RequestService } from 'src/app/shared/request.service';
-import { io, Socket } from "socket.io-client";
-import { AuthService } from 'src/app/shared/auth.service';
+import { AuthService } from 'src/app/services/auth/auth.service';
 
 @Component({
   selector: 'app-index',
@@ -17,23 +15,20 @@ export class IndexComponent {
   constructor(public authService: AuthService) {}
 
   ngOnInit() {
-    if (this.authService.isConnected === null) {
-      this.authService.isLoggedIn();
-    }
-    console.log("ngOnInit index", this.authService.isConnected)
-    //document.body.appendChild(this.game.renderer.domElement);
-    // const that = this;
-    // this.socket.on("game_gameId_get", (data) => {
-    //   this.getGameId(data);
-    // });
+    if (this.authService.getIsConnected() === null) this.authService.isLoggedIn();
+    console.log("ngOnInit index", this.authService.getIsConnected());
   }
 
   isConnected() {
-    return this.authService.isConnected;
+    return this.authService.getIsConnected();
   }
 
   logout() {
     this.authService.doLogout();
+  }
+
+  getUser() {
+    return this.authService.getCurrentUser();
   }
 
 }

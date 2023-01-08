@@ -3,10 +3,10 @@
   <div class="buttons">
     <img src="assets/M.png">
     <div class="row">
-      <ng-template [ngIf]="isConnected() === true && authService.currentUser">
+      <ng-template [ngIf]="isConnected() === true && getUser()">
         <div class="mb-3">
-          <img class="border border-dark rounded" src="https://avatars.dicebear.com/api/adventurer-neutral/{{authService.currentUser.username }}.svg?size=64">
-          <span class="h3 align-middle"> Connecté sous <span class="fw-bold">{{authService.currentUser.username }}</span></span>
+          <img class="border border-dark rounded" src="https://avatars.dicebear.com/api/adventurer-neutral/{{getUser()?.username }}.svg?size=64">
+          <span class="h3 align-middle"> Connecté sous <span class="fw-bold">{{getUser()?.username }}</span></span>
         </div>
         <div class="col-4">
           <button class="button-19 w-100" routerLink="join">Rejoindre une partie</button>

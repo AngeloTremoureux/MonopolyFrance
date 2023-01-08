@@ -1,9 +1,8 @@
 import { Component } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
-import { Event, Router } from '@angular/router';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { Router } from '@angular/router';
 import { Socket } from "socket.io-client";
-import { AuthService } from 'src/app/shared/auth.service';
-import { RequestService } from 'src/app/shared/request.service';
+import { SocketService } from 'src/app/services/socket/socket.service';
 import { MustMatch } from 'src/app/helpers/must-match.validator';
 import { environment } from 'src/environments/environment';
 import * as CryptoJS from 'crypto-js';
@@ -27,16 +26,15 @@ export class RegisterComponent {
 
   private socket: Socket;
   public signupForm: FormGroup;
-  globalError: string|null = null;
-  gloabalSuccess: string|null = null;
+  globalError: string | null = null;
+  gloabalSuccess: string | null = null;
 
   constructor(
-    private requestService: RequestService,
-    private authService: AuthService,
+    private socketService: SocketService,
     private fb: FormBuilder,
     private router: Router
   ) {
-    this.socket = requestService.getSocket();
+    this.socket = this.socketService.socket;
     this.signupForm = this.fb.group({
       name: ['AngeloTMX'],
       email: ['angelo@gmail.com'],
@@ -70,7 +68,7 @@ export class RegisterComponent {
           this.gloabalSuccess = "Votre compte a été créée. Redirection en cours...";
           const toastLiveExample = document.getElementById('liveToastBtnSuccess');
           if (toastLiveExample) new bootstrap.Toast(toastLiveExample).show();
-          setTimeout(()=>{ this.router.navigateByUrl("/login") }, 1500)
+          setTimeout(() => { this.router.navigateByUrl("/login") }, 1500)
         }
       });
     } else {

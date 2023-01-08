@@ -3,10 +3,8 @@ import { FormGroup, FormBuilder } from '@angular/forms';
 import { Router } from '@angular/router';
 import * as bootstrap from 'bootstrap';
 import { Socket } from "socket.io-client";
-import { MustMatch } from 'src/app/helpers/must-match.validator';
-import { AuthService } from 'src/app/shared/auth.service';
-import { RequestService } from 'src/app/shared/request.service';
-import { environment } from 'src/environments/environment';
+import { AuthService } from 'src/app/services/auth/auth.service';
+import { SocketService } from 'src/app/services/socket/socket.service';
 
 const ERROR_MESSAGES: any = {
   required: 'Ce champ doit être renseigné',
@@ -29,12 +27,12 @@ export class LoginComponent {
   gloabalSuccess: string|null = null;
 
   constructor(
-    private requestService: RequestService,
+    private socketService: SocketService,
     private authService: AuthService,
     private fb: FormBuilder,
     private router: Router
   ) {
-    this.socket = requestService.getSocket();
+    this.socket = this.socketService.socket;
     this.signinForm = this.fb.group({
       name: [''],
       password: ['']
