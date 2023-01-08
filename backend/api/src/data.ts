@@ -91,7 +91,7 @@ export async function verifyJwt(jwt: string, username: string): Promise<SuccessO
     const Player = await exports.getPlayerByName(username);
     if (Player == null) throw "Ce nom d'utilisateur n'existe pas";
     if (Player.key !== jwt) throw "Clé invalide";
-    return { data: { id: Player.dataValues.id, username: Player.dataValues.username, key: Player.dataValues.key } };
+    return new SuccessOutput({ id: Player.dataValues.id, username: Player.dataValues.username, key: Player.dataValues.key });
   } catch (error) {
     return handleError(error);
   }
@@ -103,7 +103,7 @@ export async function createPlayer(username: string, email: string, password: st
     if (await exports.getPlayerByName(username) != null) throw "Ce nom d'utilisateur est déjà prit";
     const key = crypto.randomBytes(32).toString('hex');
     const player = await Player.create({ username: username, email: email, password: password, key: key });
-    return { data: player };
+    return new SuccessOutput({ player });
   } catch (error) {
     return handleError(error);
   }
@@ -120,7 +120,7 @@ export async function loginPlayer(username: string, password: string): Promise<S
       username: Player.username,
       email: Player.email
     }
-    return { data: { id: Player.dataValues.id, username: Player.dataValues.username, key: jwt.sign(payload, Player.key) } };
+    return new SuccessOutput({ id: Player.dataValues.id, username: Player.dataValues.username, key: jwt.sign(payload, Player.key) });
   } catch (error: any) {
     return handleError(error);
   }
@@ -128,7 +128,7 @@ export async function loginPlayer(username: string, password: string): Promise<S
 
 function handleError(error: any): ErrorOutput {
   const message: string = error.original ? "Une erreur est survenue (" + error.original.code + ")" : error;
-  return { error: true, message };
+  return new ErrorOutput(true, message);
 }
 
 function generateUniqueCode(listeCodes: any): string {
@@ -148,10 +148,17 @@ function generateUniqueCode(listeCodes: any): string {
 // Interfaces
 
 export class ErrorOutput {
-  error!: boolean;
-  message!: string
+  error: boolean;
+  message: string
+  constructor(error: boolean, message: string) {
+    this.error = error;
+    this.message = message;
+  }
 }
 
 export class SuccessOutput {
-  data!: any
+  data: any
+  constructor(data: any) {
+    this.data = data;
+  }
 }
