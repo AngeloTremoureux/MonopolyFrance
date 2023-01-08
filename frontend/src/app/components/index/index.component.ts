@@ -1,5 +1,6 @@
 import { Component, ViewEncapsulation } from '@angular/core';
 import { AuthService } from 'src/app/services/auth/auth.service';
+import { GameManagerService } from 'src/app/services/gameManager/game-manager.service';
 
 @Component({
   selector: 'app-index',
@@ -12,7 +13,7 @@ import { AuthService } from 'src/app/services/auth/auth.service';
 })
 export class IndexComponent {
 
-  constructor(public authService: AuthService) {}
+  constructor(private authService: AuthService, private gameService: GameManagerService) {}
 
   ngOnInit() {
     if (this.authService.getIsConnected() === null) this.authService.isLoggedIn();
@@ -25,6 +26,10 @@ export class IndexComponent {
 
   logout() {
     this.authService.doLogout();
+  }
+
+  create() {
+    this.gameService.createGame();
   }
 
   getUser() {
