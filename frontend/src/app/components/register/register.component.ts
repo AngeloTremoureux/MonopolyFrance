@@ -7,6 +7,7 @@ import { RequestService } from 'src/app/shared/request.service';
 import { MustMatch } from 'src/app/helpers/must-match.validator';
 import { environment } from 'src/environments/environment';
 import * as CryptoJS from 'crypto-js';
+import * as bootstrap from 'bootstrap';
 
 const ERROR_MESSAGES: any = {
   required: 'Ce champ doit être renseigné',
@@ -27,6 +28,7 @@ export class RegisterComponent {
   private socket: Socket;
   public signupForm: FormGroup;
   globalError: string|null = null;
+  gloabalSuccess: string|null = null;
 
   constructor(
     private requestService: RequestService,
@@ -60,9 +62,15 @@ export class RegisterComponent {
         password: CryptoJS.HmacSHA256(this.signupForm.value['password'], environment.ENCRYPT_KEY).toString(),
       }
       this.socket.emit("signup", sendData, (response: any) => {
-        console.log(response);
         if (response.success == false) {
           this.globalError = "Erreur : " + response.data.message;
+          const toastLiveExample = document.getElementById('liveToastBtnError');
+          if (toastLiveExample) new bootstrap.Toast(toastLiveExample).show();
+        } else {
+          this.gloabalSuccess = "Votre compte a été créée. Redirection en cours...";
+          const toastLiveExample = document.getElementById('liveToastBtnSuccess');
+          if (toastLiveExample) new bootstrap.Toast(toastLiveExample).show();
+          setTimeout(()=>{ this.router.navigateByUrl("/login") }, 1500)
         }
       });
     } else {

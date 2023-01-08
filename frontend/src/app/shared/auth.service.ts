@@ -1,59 +1,72 @@
 import { Injectable } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
+import { io, Socket } from "socket.io-client";
 import {
   HttpClient,
   HttpHeaders,
   HttpErrorResponse,
 } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { RequestService } from './request.service';
+
+interface PlayerType {
+  id: number,
+  username: string,
+  email: string
+}
+
 @Injectable({
   providedIn: 'root',
 })
 export class AuthService {
-  endpoint: string = 'http://localhost:8080/api';
   headers = new HttpHeaders().set('Content-Type', 'application/json');
-  currentUser = {};
-  constructor(private http: HttpClient, public router: Router) {}
-  // Sign-up
-  signUp(user: string): Observable<any> {
-    let api = `${this.endpoint}/register-user`;
-    return this.http.post(api, user).pipe(catchError(this.handleError));
+  socket: Socket;
+  isConnected: boolean|null = null;
+  currentUser: PlayerType|undefined;
+  constructor(private http: HttpClient, public router: Router, public requestService: RequestService) {
+    this.socket = this.requestService.getSocket();
   }
   // Sign-in
-  signIn(user: string) {
-    return this.http
-      .post<any>(`${this.endpoint}/signin`, user)
-      .subscribe((res: any) => {
-        localStorage.setItem('access_token', res.token);
-        this.getUserProfile(res._id).subscribe((res) => {
-          this.currentUser = res;
-          this.router.navigate(['lobby']);
-        });
-      });
+  signIn(token: string, username: string) {
+    localStorage.setItem('access_token', token);
+    localStorage.setItem('username', username);
   }
   getToken() {
     return localStorage.getItem('access_token');
   }
-  get isLoggedIn(): boolean {
-    let authToken = localStorage.getItem('access_token');
-    return authToken !== null ? true : false;
-  }
-  doLogout() {
-    let removeToken = localStorage.removeItem('access_token');
-    if (removeToken == null) {
-      this.router.navigate(['log-in']);
+  async isLoggedIn(): Promise<boolean> {
+    const key = localStorage.getItem('access_token');
+    const username = localStorage.getItem('username');
+    const response: any = await new Promise((resolve) => {
+      console.log(this.socket)
+      this.socket.emit("socket_is_logged", (response: any) => {
+        resolve(response);
+      });
+    });
+    console.log("is login?" , response);
+    if (response.success === true) {
+      this.isConnected = true;
+      this.currentUser = {
+        email: response.data.email,
+        username: response.data.username,
+        id: response.data.id,
+      }
+      return true;
+    } else {
+      this.isConnected = false;
+      this.currentUser = undefined;
+      return false;
     }
   }
-  // User profile
-  getUserProfile(id: any): Observable<any> {
-    let api = `${this.endpoint}/user-profile/${id}`;
-    return this.http.get(api, { headers: this.headers }).pipe(
-      map((res) => {
-        return res || {};
-      }),
-      catchError(this.handleError)
-    );
+  doLogout() {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('username');
+    this.currentUser = undefined;
+    this.isConnected = false;
+    this.router.navigateByUrl('/refresh', { skipLocationChange: true }).then(() => {
+      this.router.navigate(['/']);
+    });
   }
   // Error
   handleError(error: HttpErrorResponse) {

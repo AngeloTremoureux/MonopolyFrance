@@ -1,9 +1,24 @@
-<div *ngIf="globalError" class="alert alert-danger d-flex align-items-center" role="alert">
-  <svg class="bi flex-shrink-0 me-2" role="img" aria-label="Danger:"><use xlink:href="#exclamation-triangle-fill"/></svg>
-  <div>
-    An example danger alert with an icon
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="liveToastBtnError" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto text-danger"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Serveur</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body text-danger">
+      {{ globalError }}
+    </div>
+  </div>
+  <div id="liveToastBtnSuccess" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto text-success"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Serveur</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body text-success">
+      {{ gloabalSuccess }}
+    </div>
   </div>
 </div>
+
 
 <div class="container-fluid">
   <div id="login-box">
@@ -34,6 +49,8 @@
         </div>
         <input type="submit" name="signup_submit" value="S'enregistrer" />
         <br>
+        <br>
+        Déjà un compte ? <a routerLink="/login">Se connecter</a>
       </div>
 
       <div class="right">

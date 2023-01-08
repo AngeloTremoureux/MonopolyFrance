@@ -385,6 +385,10 @@
                     },
                     "field": "isOnline",
                     "seqType": "Sequelize.BOOLEAN"
+                },
+                "key": {
+                    "field": "key",
+                    "seqType": "Sequelize.STRING"
                 }
             },
             "indexes": []
@@ -428,5 +432,5 @@
             "indexes": []
         }
     },
-    "revision": 3
+    "revision": 4
 }

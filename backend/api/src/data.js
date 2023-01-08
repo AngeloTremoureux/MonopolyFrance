@@ -1,4 +1,8 @@
 const Model = require('./../models');
+const CryptoJS = require('crypto-js');
+const crypto = require('crypto');
+const token = require('./../../tokens/tokens.json');
+const jwt = require('jsonwebtoken');
 
 exports.getGameByCode = async function (code) {
   if (!code) return;
@@ -62,30 +66,51 @@ exports.getPlayerByName = async function (username) {
   }
 }
 
-exports.createPlayer = async function (username, email, password) {
+exports.verifyJwt = async function (jwt, username) {
   try {
-    if (!username || !email || !password) throw "Erreur interne au serveur";
-    if (exports.getPlayerByName(username) != null) throw "Ce nom d'utilisateur est déjà prit";
-    const Player = await Model.Player.create({ username: username, email: email, password: password });
-    return { data: Player};
+    if (!jwt || !username) throw "Erreur interne au serveur";
+    const Player = await exports.getPlayerByName(username);
+    if (Player == null) throw "Ce nom d'utilisateur n'existe pas";
+    if (Player.key !== jwt) throw "Clé invalide";
+    return { data: {id: Player.dataValues.id, username: Player.dataValues.username, key: Player.dataValues.key} };
   } catch (error) {
     return handleError(error);
   }
 }
 
+exports.createPlayer = async function (username, email, password) {
+  try {
+    if (!username || !email || !password) throw "Erreur interne au serveur";
+    if (await exports.getPlayerByName(username) != null) throw "Ce nom d'utilisateur est déjà prit";
+    const key = crypto.randomBytes(32).toString('hex');
+    const Player = await Model.Player.create({ username: username, email: email, password: password, key: key});
+    return { data: Player };
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+exports.loginPlayer = async function (username, password) {
+  try {
+    if (!username || !password) throw "Erreur interne au serveur";
+    const Player = await exports.getPlayerByName(username);
+    if (Player == null) throw "Ce nom d'utilisateur n'existe pas";
+    if (Player.password != CryptoJS.HmacSHA256(password, token['ENCRYPT_KEY']).toString()) throw "Le mot de passe n'est pas correct";
+    const payload = {
+      id: Player.id,
+      username: Player.username,
+      email: Player.email
+    }
+    return { data: {id: Player.dataValues.id, username: Player.dataValues.username, key: jwt.sign(payload, Player.key)} };
+  } catch (error) {
+    return handleError(error);
+  }
+  //console.log(CryptoJS.HmacSHA256('password', token['ENCRYPT_KEY']).toString());
+}
+
 function handleError(error) {
   const message = error.original ? "Une erreur est survenue (" + error.original.code + ")" : error;
   return { error: true, message };
-}
-
-
-function jwtSign(Game, Player, Board) {
-  const sign = {
-    playerId : Player.id,
-    gameId   : Game.id,
-    boardId  : Board.id
-  }
-  return sign;
 }
 
 function generateUniqueCode(listeCodes) {

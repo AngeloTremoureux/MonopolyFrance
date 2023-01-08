@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { io, Socket } from "socket.io-client";
+import { AuthService } from './auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -12,7 +13,9 @@ export class RequestService {
   private api = 'localhost:8080/api/';
 
   constructor(private http: HttpClient) {
-    this.socket = io(":8080");
+    const token = localStorage.getItem('access_token');
+    const username = localStorage.getItem('username');
+    this.socket = io(":8080", { query: { token, username }});
   }
 
   public getSocket() {

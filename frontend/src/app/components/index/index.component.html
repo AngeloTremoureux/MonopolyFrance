@@ -3,12 +3,29 @@
   <div class="buttons">
     <img src="assets/M.png">
     <div class="row">
-      <div class="col-6">
-        <button class="button-19 w-100" routerLink="join">Rejoindre une partie</button>
-      </div>
-      <div class="col-6">
-        <button class="button-19 w-100" routerLink="create">Créer une partie</button>
-      </div>
+      <ng-template [ngIf]="isConnected() === true && authService.currentUser">
+        <div class="mb-3">
+          <img class="border border-dark rounded" src="https://avatars.dicebear.com/api/adventurer-neutral/{{authService.currentUser.username }}.svg?size=64">
+          <span class="h3 align-middle"> Connecté sous <span class="fw-bold">{{authService.currentUser.username }}</span></span>
+        </div>
+        <div class="col-4">
+          <button class="button-19 w-100" routerLink="join">Rejoindre une partie</button>
+        </div>
+        <div class="col-4">
+          <button class="button-19 w-100" routerLink="create">Créer une partie</button>
+        </div>
+        <div class="col-4">
+          <button class="button-19 w-100" (click)="logout()">Se déconnecté</button>
+        </div>
+      </ng-template>
+      <ng-template [ngIf]="isConnected() === false">
+        <div class="col-6">
+          <button class="button-19 w-100" routerLink="login">Se connecter</button>
+        </div>
+        <div class="col-6">
+          <button class="button-19 w-100" routerLink="register">S'enregistrer</button>
+        </div>
+      </ng-template>
     </div>
   </div>
 </div>

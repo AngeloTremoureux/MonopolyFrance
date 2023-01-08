@@ -1,1 +1,55 @@
-<p>login works!</p>
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="liveToastBtnError" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto text-danger"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Serveur</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body text-danger">
+      {{ globalError }}
+    </div>
+  </div>
+  <div id="liveToastBtnSuccess" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div class="toast-header">
+      <strong class="me-auto text-success"><i class="fa fa-exclamation-triangle" aria-hidden="true"></i> Serveur</strong>
+      <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+    </div>
+    <div class="toast-body text-success">
+      {{ gloabalSuccess }}
+    </div>
+  </div>
+</div>
+
+
+<div class="container-fluid">
+  <div id="login-box">
+    <form class="form-signin" [formGroup]="signinForm" (ngSubmit)="login()">
+      <div class="left">
+        <h1>Se connecter</h1>
+        <div class="form-floating">
+          <input class="form-input form-control" type="text" (keyup)="resetForm($event)" placeholder="Nom d'utilisateur" formControlName="name" required />
+          <div class="error"></div>
+          <label for="floatingInput">Nom d'utilisateur</label>
+        </div>
+        <div class="form-floating">
+          <input class="form-input form-control" type="password" (keyup)="resetForm($event)" name="password" formControlName="password" placeholder="Mot de passe" required />
+          <div class="error"></div>
+          <label for="floatingInput">Mot de passe</label>
+        </div>
+        <input type="submit" name="signup_submit" value="Se connecter" />
+        <br>
+        <hr>
+        Pas encore de compte ? <a routerLink="/register">S'enregistrer</a>
+      </div>
+
+      <div class="right">
+        <span class="loginwith text-black">Se connecter<br />avec un compte</span>
+        <div id="gSignIn"></div>
+        <div class="userContent"></div>
+        <button class="social-signin facebook"><i class="fa fa-facebook"></i> Facebook</button>
+        <button class="social-signin twitter"><i class="fa fa-twitter"></i> Twitter</button>
+        <button class="social-signin google"><i class="fa fa-google"></i> Google</button>
+      </div>
+      <div class="or"><span class="position-relative" style="z-index: 1">OU</span></div>
+    </form>
+  </div>
+</div>

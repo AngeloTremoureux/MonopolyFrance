@@ -25,7 +25,8 @@ module.exports = (sequelize, DataTypes) => {
     isOnline: {
       type: DataTypes.BOOLEAN,
       defaultValue: true
-    }
+    },
+    key: DataTypes.STRING
   }, {
     timestamps: false,
     sequelize,
