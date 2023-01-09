@@ -4,8 +4,8 @@ import { sequelize } from '.';
 class Game extends Model<InferAttributes<Game>, InferCreationAttributes<Game>> {
   id!: CreationOptional<number>;
   code!: string;
-  isOver!: boolean;
-  isStarted!: boolean;
+  isOver!: CreationOptional<boolean>;
+  isStarted!: CreationOptional<boolean>;
   static associate: (models: any) => void;
 }
 

@@ -1,8 +1,12 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
 import { sequelize } from '.';
+import Board from './board';
+import CardSettings from './card-settings';
 
 class Position extends Model<InferAttributes<Position>, InferCreationAttributes<Position>> {
   id!: CreationOptional<number>;
+  boardId!: CreationOptional<number>;
+  numero!: CreationOptional<number>;
   static associate: (models: any) => void;
 }
 
@@ -11,6 +15,22 @@ Position.init({
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true
+  },
+  boardId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Board,
+      key: 'id'
+    }
+  },
+  numero: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: CardSettings,
+      key: 'id'
+    }
   }
 }, {
   timestamps: false,

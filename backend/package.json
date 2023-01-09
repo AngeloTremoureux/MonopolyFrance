@@ -4,7 +4,8 @@
   "scripts": {
     "start": "ts-node api/src/entry.ts",
     "makemig": "makemigration --name",
-    "dbmig": "sequelize db:migrate"
+    "dbmig": "sequelize db:migrate",
+    "practice": "ts-node -T api/practice.ts"
   },
   "private": true,
   "dependencies": {
@@ -18,7 +19,7 @@
     "rxjs": "~7.5.0",
     "save": "^2.9.0",
     "sequelize": "^6.28.0",
-    "sequelize-auto-migrations-v2": "^1.2.1",
+    "sequelize-typescript-migration-lts": "^3.2.3",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"
   },

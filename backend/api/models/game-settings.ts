@@ -1,11 +1,15 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
 import { sequelize } from '.';
+import Game from './game';
+import GameState from './game_state';
 
 class GameSettings extends Model<InferAttributes<GameSettings>, InferCreationAttributes<GameSettings>> {
   id!: CreationOptional<number>;
   timer!: number;
-  playerTurn!: number|null;
-  nbPlayers!: number|null;
+  playerTurn!: CreationOptional<number>;
+  nbPlayers!: CreationOptional<number>;
+  gameId!: CreationOptional<number>;
+  gameStateId!: CreationOptional<number>;
   static associate: (models: any) => void;
 }
 
@@ -23,6 +27,22 @@ GameSettings.init({
   nbPlayers: {
     type: DataTypes.INTEGER,
     allowNull: true
+  },
+  gameId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: Game,
+      key: 'id'
+    }
+  },
+  gameStateId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: GameState,
+      key: 'id'
+    }
   }
 }, {
   sequelize,

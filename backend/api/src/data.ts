@@ -1,5 +1,4 @@
 import Board from './../models/board';
-import Bot from './../models/bot';
 import CardPurchasePrize from './../models/card-purchase-prize';
 import CardSettings from './../models/card-settings';
 import CardTaxAmount from './../models/card-tax-amount';
@@ -56,23 +55,23 @@ export async function getGameByCode(code: string): Promise<any> {
 
 
 
-export async function createGame(userId: string): Promise<any> {
-  // if (!userId) return;
-  // try {
-  //   const codes = await Model.Game.findAll({ attributes: ['code'] });
-  //   const Game = await Model.Game.create({ code: generateUniqueCode(codes) });
-  //   const Player = await Model.Player.create({ username: username });
-  //   const GameSettings = await Model.Game_Settings.create({ timer: 40, GameId: Game.id });
-  //   const Board = await Model.Board.create({ avatar: 1, isReady: 0, GameId: Game.id, PlayerId: Player.id });
-  //   return jwtSign(Game, Player, Board);
-  // } catch (error) {
-  //   console.log("error", error);
-  //   return null;
-  // }
+export async function createGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
+  if (!userId) throw "Erreur interne au serveur";
+  try {
+    const codes: Game[] = await Game.findAll({ attributes: ['code'] });
+    const game: Game = await Game.create({ code: generateUniqueCode(codes) });
+    const player = await getPlayerById(userId);
+    if (player == null) throw "Ce nom d'utilisateur n'existe pas";
+    const gameSettings = GameSettings.create({ timer: 40, gameId: game.id });
+    const board = await Board.create({ avatar: 1, isReady: false, gameId: game.id, playerId: player.id });
+    return new SuccessOutput({ Game });
+  } catch (error) {
+    return handleError(error);
+  }
 }
 
-export async function getPlayerByName(username: string): Promise<any> {
-  if (!username) return;
+export async function getPlayerByName(username: string): Promise<Player|null> {
+  if (!username) return null;
   try {
     const player = await Player.findOne({
       where: {
@@ -85,15 +84,13 @@ export async function getPlayerByName(username: string): Promise<any> {
   }
 }
 
-export async function verifyJwt(jwt: string, username: string): Promise<SuccessOutput | ErrorOutput> {
+export async function getPlayerById(userId: number): Promise<Player|null> {
+  if (!userId) return null;
   try {
-    if (!jwt || !username) throw "Erreur interne au serveur";
-    const Player = await exports.getPlayerByName(username);
-    if (Player == null) throw "Ce nom d'utilisateur n'existe pas";
-    if (Player.key !== jwt) throw "Clé invalide";
-    return new SuccessOutput({ id: Player.dataValues.id, username: Player.dataValues.username, key: Player.dataValues.key });
+    const player = await Player.findByPk(userId);
+    return player;
   } catch (error) {
-    return handleError(error);
+    return null;
   }
 }
 
