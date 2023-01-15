@@ -67,6 +67,21 @@ export async function addPlayerToGame(userId: number, code: string): Promise<Suc
     return handleError(error);
   }
 }
+export async function startGame(playerId: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!playerId) throw "Erreur interne au serveur";
+    const isOwner = await isOwnerOfGame(playerId);
+    if (isOwner instanceof ErrorOutput || !isOwner.data.isOwner) throw "Le joueur n'est pas le chef de la partie";
+    const board = await findBoardByPlayerId(playerId);
+    if (!board) throw "Le joueur n'a pas de partie";
+    if (board.Game.isStarted) throw "La partie est déjà en cours";
+    board.Game.isStarted = true;
+    board.Game.save();
+    return new SuccessOutput({ board });
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 export async function kickPlayerFromGame(fromPlayerId: number, toPlayerId: number): Promise<SuccessOutput | ErrorOutput> {
   try {
@@ -74,7 +89,6 @@ export async function kickPlayerFromGame(fromPlayerId: number, toPlayerId: numbe
     const isOwner = await isOwnerOfGame(fromPlayerId);
     if (isOwner instanceof ErrorOutput || !isOwner.data.isOwner) throw "Le joueur n'est pas le chef de la partie";
     const board = await findBoardByPlayerId(toPlayerId);
-    console.log("board", board)
     if (!board) throw "Le joueur n'a pas de partie";
     if (board.GameId !== isOwner.data.board.GameId) throw "Les joueurs ne sont pas dans la même partie";
     const oldBoard = board;

@@ -53,6 +53,11 @@ export class LobbyComponent implements OnInit{
       if (data.PlayerId === this.board.PlayerId) this.loading = false;
       this.boards.find((x: any) => x.PlayerId === data.PlayerId).isReady = data.isReady;
     });
+
+    this.socket.on("startGame", () => {
+      alert("started");
+      this.game.isStarted = true;
+    });
   }
 
   kick(index: number) {
@@ -106,6 +111,11 @@ export class LobbyComponent implements OnInit{
         this.router.navigateByUrl("/");
       }
     });
+  }
+
+  start() {
+    if (!this.readyToStart()) return;
+    this.socket.emit("start_game");
   }
 
   readyToStart() {

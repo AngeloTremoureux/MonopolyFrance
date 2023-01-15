@@ -58,6 +58,18 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     }
   });
 
+  socket.on("start_game", async () => {
+    if (!(socket as any).decoded) return;
+    const { id } = (socket as any).decoded;
+    if (!id) return;
+    const board: SuccessOutput | ErrorOutput = await dataManager.startGame(id);
+    if (board instanceof SuccessOutput) {
+      io.to(board.data.board.GameId).emit("startGame");
+    } else {
+      console.error(board);
+    }
+  });
+
   socket.on("leave_lobby", async (callback) => {
     if (!callback) return;
     if (!(socket as any).decoded) return;

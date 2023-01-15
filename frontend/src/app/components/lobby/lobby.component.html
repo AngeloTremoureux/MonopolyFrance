@@ -69,7 +69,7 @@
         <button class="button-19 w-100" (click)="copy()">{{ copyMessage }}</button>
       </div>
       <div class="col-3">
-        <button [attr.disabled]="readyToStart() ? null : 'true'" class="button-19 btn-start w-100">Démarrer la partie ({{ boards.length }} / 4)</button>
+        <button [attr.disabled]="readyToStart() ? null : 'true'" (click)="start()" class="button-19 btn-start w-100">Démarrer la partie ({{ boards.length }} / 4)</button>
       </div>
       <div class="col-3">
         <button class="button-19 btn-leave w-100" (click)="leave()">Quitter</button>
