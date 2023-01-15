@@ -12,6 +12,7 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ClipboardModule } from '@angular/cdk/clipboard';
+import { PlayComponent } from './components/play/play.component';
 
 @NgModule({
   declarations: [
@@ -20,7 +21,8 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
     JoinComponent,
     LobbyComponent,
     LoginComponent,
-    RegisterComponent
+    RegisterComponent,
+    PlayComponent
   ],
   imports: [
     BrowserModule,
