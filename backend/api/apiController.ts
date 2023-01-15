@@ -45,12 +45,25 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     }
   });
 
+  socket.on("kick_lobby", async (playerId) => {
+    if (!playerId) return;
+    if (!(socket as any).decoded) return;
+    const { id } = (socket as any).decoded;
+    if (!id) return;
+    const board: SuccessOutput | ErrorOutput = await dataManager.kickPlayerFromGame(id, playerId);
+    if (board instanceof SuccessOutput) {
+      io.to(board.data.board.GameId).emit("removePlayer", playerId);
+    } else {
+      console.error(board);
+    }
+  });
+
   socket.on("leave_lobby", async (callback) => {
     if (!callback) return;
     if (!(socket as any).decoded) return;
     const { id } = (socket as any).decoded;
     if (!id) return;
-    const board: SuccessOutput | ErrorOutput = await dataManager.leaveGame(id);
+    const board: SuccessOutput | ErrorOutput = await dataManager.removePlayerFromGame(id);
     if (board instanceof SuccessOutput) {
       socket.to(board.data.gameId).emit("removePlayer", id);
       socket.rooms.clear();

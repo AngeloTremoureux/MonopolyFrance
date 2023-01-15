@@ -68,7 +68,24 @@ export async function addPlayerToGame(userId: number, code: string): Promise<Suc
   }
 }
 
-export async function leaveGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
+export async function kickPlayerFromGame(fromPlayerId: number, toPlayerId: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!fromPlayerId || !toPlayerId) throw "Erreur interne au serveur";
+    const isOwner = await isOwnerOfGame(fromPlayerId);
+    if (isOwner instanceof ErrorOutput || !isOwner.data.isOwner) throw "Le joueur n'est pas le chef de la partie";
+    const board = await findBoardByPlayerId(toPlayerId);
+    console.log("board", board)
+    if (!board) throw "Le joueur n'a pas de partie";
+    if (board.GameId !== isOwner.data.board.GameId) throw "Les joueurs ne sont pas dans la même partie";
+    const oldBoard = board;
+    await board.destroy();
+    return new SuccessOutput({ board: oldBoard });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function removePlayerFromGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
   if (!userId) throw "Erreur interne au serveur";
   try {
     const board = await findBoardByPlayerId(userId);
@@ -78,6 +95,32 @@ export async function leaveGame(userId: number): Promise<SuccessOutput | ErrorOu
     return new SuccessOutput({ gameId });
   } catch (error) {
     return handleError(error);
+  }
+}
+
+export async function isOwnerOfGame(playerId: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!playerId) throw "Erreur interne au serveur";
+    const board: Board | null = await findBoardByPlayerId(playerId);
+    if (!board) throw "Erreur interne au serveur";
+    const boardOwner: Board | null = await getOwnerOfGame(board.GameId);
+    if (!boardOwner) throw "Erreur interne au serveur";
+    const isOwner = boardOwner.PlayerId === playerId;
+    return new SuccessOutput({ isOwner, board: boardOwner });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+
+export async function getOwnerOfGame(gameId: number): Promise<Board | null> {
+  try {
+    if (!gameId) throw "Erreur interne au serveur";
+    const boards = await findBoardsByGameId(gameId);
+    if (boards == null || boards.length === 0) throw "Aucune partie en cours";
+    return boards[0];
+  } catch (error) {
+    return null;
   }
 }
 

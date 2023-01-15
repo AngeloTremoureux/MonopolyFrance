@@ -42,6 +42,7 @@ export class LobbyComponent implements OnInit{
     });
 
     this.socket.on("removePlayer", (playerId) => {
+      if (playerId === this.board.PlayerId) this.router.navigateByUrl("/");
       const index = this.boards.findIndex((x: any) => x.PlayerId === playerId);
       if (index > -1) {
         this.boards.splice(index, 1);
@@ -54,8 +55,13 @@ export class LobbyComponent implements OnInit{
     });
   }
 
-  kick() {
-
+  kick(index: number) {
+    const board = this.boards[index];
+    if (!board && board.PlayerId !== this.board.PlayerId) return;
+    const valeur = confirm("Êtes vous sûr de vouloir expulser du salon " + board.Player.username + " ?");
+    if (valeur) {
+      this.socket.emit("kick_lobby", board.Player.id);
+    }
   }
 
   async copy() {
