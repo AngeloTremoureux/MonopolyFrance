@@ -3,19 +3,17 @@ import { CardPrizeType, CardType } from "../types/types";
 import { Utils } from "../utils/utils";
 
 export class Card {
-
-    private position: number;
+    public id: number;
+    public level: number|null;
     private nom: string;
     private type: CardType;
-
-    public level: number|null;
     public prize: CardPrizeType|null;
     public ownerId: number|null;
     public owner: Player|null;
     public color: number;
 
     public constructor(position: number, nom: string, type: CardType, prize: CardPrizeType, color: number) {
-        this.position = position;
+        this.id = position;
         this.nom = nom;
         this.type = type;
         this.prize = prize;
@@ -23,6 +21,10 @@ export class Card {
         this.level = null;
         this.ownerId = null;
         this.owner = null;
+    }
+
+    get position() {
+      return this.id;
     }
 
     public isOwned(): boolean {
