@@ -1,4 +1,7 @@
 <div class="container-fluid px-5 pt-5">
+  <div class="text-center mb-5">
+    <img src="assets/brand/logo-no-background.png" width="400px">
+  </div>
   <div class="row">
     <div class="col-auto col-3" *ngFor="let item of [].constructor(4); let i = index">
       <ng-container *ngIf="isPlayer(i) === true; else robotTemplate">
@@ -66,7 +69,10 @@
         <button class="button-19 w-100" (click)="copy()">{{ copyMessage }}</button>
       </div>
       <div class="col-3">
-        <button [attr.disabled]="readyToStart() ? null : 'true'" class="button-19 btn-start w-100">Démarrer la partie</button>
+        <button [attr.disabled]="readyToStart() ? null : 'true'" class="button-19 btn-start w-100">Démarrer la partie ({{ boards.length }} / 4)</button>
+      </div>
+      <div class="col-3">
+        <button class="button-19 btn-leave w-100" (click)="leave()">Quitter</button>
       </div>
     </ng-container>
     <ng-template #defaultBtnTemplate>

@@ -91,7 +91,12 @@ export async function removePlayerFromGame(userId: number): Promise<SuccessOutpu
     const board = await findBoardByPlayerId(userId);
     if (board == null) throw "Aucune partie en cours";
     const gameId = board.GameId;
+    const game: Game = board.Game;
     await board.destroy();
+    const boards = await findBoardsByGameId(gameId);
+    if (boards && boards.length === 0) {
+      await game.destroy();
+    }
     return new SuccessOutput({ gameId });
   } catch (error) {
     return handleError(error);
