@@ -10,7 +10,6 @@ import { Card } from '../card/card';
 import { PlayerTurn } from '../player/player-turn';
 import { Utils } from '../utils/utils';
 import { AudioController } from '../audio/audio';
-import { RequestService } from 'src/app/shared/request.service';
 
 export class Game {
   private static game: Game;
@@ -18,7 +17,6 @@ export class Game {
   scene2: THREE.Scene;
   scene3: THREE.Scene;
   loader: THREE.ObjectLoader;
-  requestService!: RequestService;
   gltfLoader: GLTFLoader;
   camera: any;
   renderer: any;
@@ -39,7 +37,6 @@ export class Game {
    */
   private constructor() {
     Game.game = this;
-    console.log("okCC")
     this.scene = new THREE.Scene();
     this.scene2 = new THREE.Scene();
     this.scene3 = new THREE.Scene();
@@ -89,57 +86,54 @@ export class Game {
     const game: Game = this;
     this.parameters.playerId = parseInt(playerId);
     this.parameters.gameId = parseInt(gameId);
-    const cards = await this.requestService.getData("game/cards");
-    if (cards) {
-      cards.forEach((card: any) => {
-        const Card_Type: CardType = {
-          id: card.Card_Type.id,
-          nom: card.Card_Type.nom
-        }
-        const purchasePrize: number[] = [];
-        const taxAmount: number[] = [];
-        card.Card_Purchase_Prizes.forEach((prize: any) => {
-          purchasePrize.push(prize.cost)
-        });
-        card.Card_Tax_Amounts.forEach((tax: any) => {
-          taxAmount.push(tax.cost)
-        });
-        const Card_Prize: CardPrizeType = {
-          purchasePrize,
-          taxAmount
-        };
-        if (game.parameters.cards)
-          game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
-      });
-    }
-
-    const gameData = await this.requestService.getData("game/" + gameId);
-    if (gameData) {
-      game.parameters.nbPlayers = gameData.Game_Setting.nbPlayers;
-        game.parameters.timer = gameData.Game_Setting.timer;
-        game.parameters.state = gameData.Game_Setting.GameStateId;
-        game.parameters.playerTurn = new PlayerTurn(game, gameData.Game_Setting.playerTurn);
-        let count = 1;
-        gameData.Boards.forEach((board: any) => {
-          const player: Player = new Player(game.requestService, game, count, board.id, board.money, board.Player.username, board.Position.numero);
-          if (game.parameters.players) {
-            game.parameters.players.push(player);
+    this.socket.emit("get_cards", (cards: any) => {
+      if (cards) {
+        cards.forEach((card: any) => {
+          const Card_Type: CardType = {
+            id: card.Card_Type.id,
+            nom: card.Card_Type.nom
           }
-          count++;
+          const purchasePrize: number[] = [];
+          const taxAmount: number[] = [];
+          card.Card_Purchase_Prizes.forEach((prize: any) => {
+            purchasePrize.push(prize.cost)
+          });
+          card.Card_Tax_Amounts.forEach((tax: any) => {
+            taxAmount.push(tax.cost)
+          });
+          const Card_Prize: CardPrizeType = {
+            purchasePrize,
+            taxAmount
+          };
+          if (game.parameters.cards)
+            game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
         });
-        gameData.Cards.forEach((card: any) => {
-          if (game.parameters.cards) {
-            const Card: Card = game.parameters.cards[card.Card_Setting.id];
-            Card.ownerId = card.PlayerId;
-            Card.owner = game.getCharacterById(card.PlayerId);
-            Card.level = card.level;
-          }
-        });
-    }
-  }
+      }
+    });
 
-  public setRequestService(service: RequestService) {
-    this.requestService = service;
+    // const gameData = await this.requestService.getData("game/" + gameId);
+    // if (gameData) {
+    //   game.parameters.nbPlayers = gameData.Game_Setting.nbPlayers;
+    //     game.parameters.timer = gameData.Game_Setting.timer;
+    //     game.parameters.state = gameData.Game_Setting.GameStateId;
+    //     game.parameters.playerTurn = new PlayerTurn(game, gameData.Game_Setting.playerTurn);
+    //     let count = 1;
+    //     gameData.Boards.forEach((board: any) => {
+    //       const player: Player = new Player(game.requestService, game, count, board.id, board.money, board.Player.username, board.Position.numero);
+    //       if (game.parameters.players) {
+    //         game.parameters.players.push(player);
+    //       }
+    //       count++;
+    //     });
+    //     gameData.Cards.forEach((card: any) => {
+    //       if (game.parameters.cards) {
+    //         const Card: Card = game.parameters.cards[card.Card_Setting.id];
+    //         Card.ownerId = card.PlayerId;
+    //         Card.owner = game.getCharacterById(card.PlayerId);
+    //         Card.level = card.level;
+    //       }
+    //     });
+    // }
   }
 
   /**

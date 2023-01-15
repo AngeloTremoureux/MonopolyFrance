@@ -1,4 +1,3 @@
-import { RequestService } from "src/app/shared/request.service";
 import { Game } from "../game/game";
 import { Utils } from "../utils/utils";
 
@@ -14,11 +13,9 @@ export class Player {
   public character: THREE.Mesh | undefined;
   private manageQueueState: boolean;
   private moveQueue: number[];
-  private request: RequestService;
 
-  constructor(request: RequestService, game: Game, team: number, id: number, money: number, username: string, position: number) {
+  constructor(game: Game, team: number, id: number, money: number, username: string, position: number) {
       this.id = id;
-      this.request = request;
       this.money = money;
       this.username = username;
       this.position = position;
@@ -74,11 +71,11 @@ export class Player {
   // }
 
   private async updateNumCase(): Promise<void> {
-      const character: Player = this;
-      const data = await this.request.getData("game/" + this.game.getGameId() + "/player/" + this.id + "/position");
-      if (data && data.numero && character.character) {
-        character.character.userData["numCase"] = data.numero;
-      }
+      // const character: Player = this;
+      // const data = await this.request.getData("game/" + this.game.getGameId() + "/player/" + this.id + "/position");
+      // if (data && data.numero && character.character) {
+      //   character.character.userData["numCase"] = data.numero;
+      // }
   }
 
   public async getNumCase(): Promise<number> {
