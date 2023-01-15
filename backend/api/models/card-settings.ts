@@ -23,7 +23,7 @@ CardSettings.init({
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: CardSettings,
+      model: CardType,
       key: 'id'
     }
   }

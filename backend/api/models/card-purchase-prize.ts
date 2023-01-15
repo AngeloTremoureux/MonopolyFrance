@@ -5,7 +5,7 @@ import CardSettings from './card-settings';
 class CardPurchasePrize extends Model<InferAttributes<CardPurchasePrize>, InferCreationAttributes<CardPurchasePrize>> {
   id!: CreationOptional<number>;
   cost!: number;
-  cardSettingsId!: CreationOptional<number>;
+  CardSettingId!: CreationOptional<number>;
   declare CardSettings: NonAttribute<CardSettings[]>;
   static associate: (models: any) => void;
 }
@@ -17,7 +17,7 @@ CardPurchasePrize.init({
     autoIncrement: true
   },
   cost: DataTypes.BIGINT,
-  cardSettingsId: {
+  CardSettingId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
@@ -28,6 +28,7 @@ CardPurchasePrize.init({
 }, {
   sequelize,
   modelName: 'Card_Purchase_Prize',
+  timestamps: false
 });
 
 CardPurchasePrize.associate = function (models) {
