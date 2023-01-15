@@ -47,7 +47,7 @@ io.use((socket: Socket, next) => {
 // Create new instance of the express server
 
 io.on("connection", (socket) => {
-  handleSocket(socket);
+  handleSocket(socket, io);
 });
 
 // Define the JSON parser as a default way

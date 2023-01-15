@@ -1,0 +1,10 @@
+.text-shadow {
+  text-shadow: 1px 1px 1px black;
+}
+.card-waiting .card-body, .card-waiting .card-footer {
+  background-color: #e3e3e3
+}
+
+.card .card-footer .btn {
+  transition: 0.3s;
+}

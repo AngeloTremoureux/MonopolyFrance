@@ -1,10 +1,11 @@
-import { Socket } from "socket.io";
+import { Server, Socket } from "socket.io";
+import { DefaultEventsMap } from "socket.io/dist/typed-events";
 import * as dataManager from './src/data';
 import { SuccessOutput, ErrorOutput } from "./src/data";
 
 // Listening Events SOCKET.IO
 
-export async function handleSocket(socket: Socket): Promise<void> {
+export async function handleSocket(socket: Socket, io: Server<any, any, DefaultEventsMap, any>): Promise<void> {
   // Global Socket
   socket.onAny((eventName, ...args) => receiveLog(socket, eventName, args));
   // Socket handler
@@ -33,14 +34,28 @@ export async function handleSocket(socket: Socket): Promise<void> {
     const { id } = (socket as any).decoded;
     const board: SuccessOutput | ErrorOutput = await dataManager.getGameByPlayerId(id);
     if (board instanceof SuccessOutput) {
-      console.log("p=", board.data.boards.Player)
+      socket.join(board.data.game.id);
       callback({ success: true, data: board.data });
     } else {
       callback({ success: false, data: null });
     }
   });
 
-
+  socket.on("set_lobby_state", async (state) => {
+    const { id } = (socket as any).decoded;
+    if (state === undefined || state === null || !id || !socket.rooms) return;
+    //await sleep(2000)
+    const board: SuccessOutput | ErrorOutput = await dataManager.setPlayerLobbyState(id, state);
+    if (board instanceof SuccessOutput) {
+      socket.rooms.forEach((room: any) => {
+        if (Number.isInteger(room)) {
+          io.to(room).emit("update_lobby_state", { PlayerId: board.data.board.PlayerId, isReady: board.data.board.isReady });
+        }
+      })
+    } else {
+      console.error("Une erreur est survenue")
+    }
+  });
 
   socket.on("create_game", async (callback) => {
     if (!callback) return;
@@ -51,7 +66,6 @@ export async function handleSocket(socket: Socket): Promise<void> {
     if (game instanceof SuccessOutput) {
       callback({ success: true, data: game.data });
     } else {
-      console.log("error", game)
       callback({ success: false, data: game });
     }
   });

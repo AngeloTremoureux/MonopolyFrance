@@ -14,6 +14,7 @@ export class LobbyComponent implements OnInit{
   public board: any;
   public game: any;
   public boards: any;
+  public loading: boolean = false;
 
   private socket: Socket;
 
@@ -37,9 +38,27 @@ export class LobbyComponent implements OnInit{
     this.socket.on("removePlayer", (player) => {
       console.log(player);
     });
+
+    this.socket.on("update_lobby_state", (data) => {
+      if (data.PlayerId === this.board.PlayerId) this.loading = false;
+      this.boards.find((x: any) => x.PlayerId === data.PlayerId).isReady = data.isReady;
+    });
+  }
+
+  isPlayer(index: number): boolean {
+    return this.boards[index] ? true : false;
   }
 
   ngOnInit(): void {
 
+  }
+
+  changeReadyState(event: Event) {
+    if (this.loading) return;
+    this.loading = true;
+    const state = (event.target as any);
+    if (!state) return;
+    const status = state.classList && state.classList.contains('btn-danger') ? true : false;
+    this.socket.emit("set_lobby_state", status);
   }
 }

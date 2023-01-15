@@ -76,9 +76,26 @@ export async function getGameByPlayerId(userId: number): Promise<SuccessOutput |
   }
 }
 
+export async function setPlayerLobbyState(userId: number, state: boolean): Promise<SuccessOutput | ErrorOutput> {
+  if (!userId) throw "Erreur interne au serveur";
+  try {
+    const board = await findBoardByPlayerId(userId);
+    if (!board) throw "Aucune partie en cours";
+    board.isReady = state;
+    board.save();
+    return new SuccessOutput({ board });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
 export async function createGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
   if (!userId) throw "Erreur interne au serveur";
   try {
+    const currentBoard = await findBoardByPlayerId(userId);
+    if (currentBoard) {
+      return new SuccessOutput({ game: currentBoard.Game });
+    }
     const codes: Game[] = await Game.findAll({ attributes: ['code'] });
     const game: Game = await Game.create({ code: generateUniqueCode(codes) });
     const player = await getPlayerById(userId);
@@ -120,13 +137,12 @@ export async function findBoardByPlayerId(userId: number): Promise<Board|null> {
   try {
     const board = await Board.findOne({
       where: {
-        GameId: userId
+        PlayerId: userId
       },
       include: [{
         model: Game
       }]
     });
-    if (!board) throw "Erreur";
     return board;
   } catch (error) {
     console.error(error);
