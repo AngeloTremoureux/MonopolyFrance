@@ -1,8 +1,14 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300&display=swap');
+
 .text-shadow {
   text-shadow: 1px 1px 1px black;
 }
 .card-waiting .card-body, .card-waiting .card-footer {
   background-color: #e3e3e3
+}
+
+.card {
+  font-family: 'Poppins', sans-serif;
 }
 
 .card .card-footer .btn {
@@ -14,4 +20,11 @@
 }
 .button-19.btn-start {
   background: #5a8b4e;
+}
+
+.button-19.btn-leave:after {
+  background-color: #af1d1d;
+}
+.button-19.btn-leave {
+  background: #810f0b;
 }

@@ -6,31 +6,55 @@
           <img class="card-img-top" src="https://api.dicebear.com/5.x/fun-emoji/svg?seed={{boards[i].Player.username}}">
           <div class="card-body">
             <h5 class="card-title">
-              <ng-container *ngIf="i == 0">
-                <i class="text-warning fa-solid fa-crown"></i>
+              <ng-container *ngIf="i == 0; else defaultIconTemplate">
+                <i class="mx-2 text-warning fa-solid fa-crown"></i>
               </ng-container>
-              {{ boards[i].Player.username }}
+              <ng-template #defaultIconTemplate>
+                <i class="mx-2 text-secondary fa-solid fa-crown"></i>
+              </ng-template>
+              <b>{{ boards[i].Player.username | uppercase}}</b>
             </h5>
-            <p *ngIf="boards[i].Player.id == board.PlayerId" class="text-success card-text">Vous</p>
+            <p *ngIf="boards[i].Player.id == board.PlayerId; else blankTemplate" class="text-primary card-text">💠<b> Joueur {{ i + 1 }}</b></p>
+            <ng-template #blankTemplate>
+              <p class="card-text">Joueur {{ i + 1}}</p>
+            </ng-template>
           </div>
           <div class="card-footer">
-            <button (click)='!loading && changeReadyState($event)' [ngClass]="[boards[i].Player.id !== board.PlayerId ? 'disabled' : '',  boards[i].isReady ? 'btn-success' : 'btn-danger']" class="btn w-100">
-              <div *ngIf="loading" class="d-inline-block"><i class="fas fa-spinner fa-spin"></i>&nbsp;</div>
-                <ng-container *ngIf="boards[i].isReady; else notReadyTemplate">Prêt</ng-container>
-                <ng-template #notReadyTemplate>Pas prêt</ng-template>
-            </button>
+            <ng-container *ngIf="i !== 0 && boards[0].PlayerId === board.PlayerId; else defaultPlayBtnTemplate">
+              <div class="row">
+                <div class="col px-1">
+                  <button (click)='!loading && changeReadyState($event)' [ngClass]="[boards[i].Player.id !== board.PlayerId ? 'disabled' : '',  boards[i].isReady ? 'btn-success' : 'btn-danger']" class="btn w-100">
+                    <div *ngIf="loading" class="d-inline-block"><i class="fas fa-spinner fa-spin"></i>&nbsp;</div>
+                      <ng-container *ngIf="boards[i].isReady; else notReadyTemplate">Prêt</ng-container>
+                      <ng-template #notReadyTemplate>Pas prêt</ng-template>
+                  </button>
+                </div>
+                <div class="col-auto px-1">
+                  <button (click)='kick()' class="btn btn-danger w-100">
+                    <span>&nbsp;Expulser</span>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+            <ng-template #defaultPlayBtnTemplate>
+              <button (click)='!loading && changeReadyState($event)' [ngClass]="[boards[i].Player.id !== board.PlayerId ? 'disabled' : '',  boards[i].isReady ? 'btn-success' : 'btn-danger']" class="btn w-100">
+                <div *ngIf="loading" class="d-inline-block"><i class="fas fa-spinner fa-spin"></i>&nbsp;</div>
+                  <ng-container *ngIf="boards[i].isReady; else notReadyTemplate">Prêt</ng-container>
+                  <ng-template #notReadyTemplate>Pas prêt</ng-template>
+              </button>
+            </ng-template>
           </div>
         </div>
       </ng-container>
       <ng-template #robotTemplate>
         <div class="card card-waiting">
-          <img class="card-img-top" src="https://api.dicebear.com/5.x/bottts-neutral/svg?seed=MonRobot{{i}}">
+          <img class="card-img-top" src="https://api.dicebear.com/5.x/bottts-neutral/svg?seed=MonRobot2">
           <div class="card-body">
             <h5 class="card-title">Joueur {{ i + 1 }}</h5>
             <p class="card-text fst-italic text-secondary">En attente ...</p>
           </div>
           <div class="card-footer">
-            <button class="btn btn-success w-100 disabled">Prêt</button>
+            <button class="btn btn-secondary w-100 disabled">Prêt</button>
           </div>
         </div>
       </ng-template>
@@ -42,12 +66,15 @@
         <button class="button-19 w-100" (click)="copy()">{{ copyMessage }}</button>
       </div>
       <div class="col-3">
-        <button [attr.disabled]="readyToStart() ? 'false' : 'true'" class="button-19 btn-start w-100">Démarrer la partie</button>
+        <button [attr.disabled]="readyToStart() ? null : 'true'" class="button-19 btn-start w-100">Démarrer la partie</button>
       </div>
     </ng-container>
     <ng-template #defaultBtnTemplate>
-      <div class="col-6">
+      <div class="col-3">
         <button class="button-19 w-100" (click)="copy()">{{ copyMessage }}</button>
+      </div>
+      <div class="col-3">
+        <button class="button-19 btn-leave w-100" (click)="leave()">Quitter la partie</button>
       </div>
     </ng-template>
   </div>

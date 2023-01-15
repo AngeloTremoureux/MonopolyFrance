@@ -20,13 +20,12 @@ import jwt from 'jsonwebtoken';
 import { exit } from 'process';
 
 
-export async function getGameByCode(code: string): Promise<any> {
+export async function findGameByCode(code: string): Promise<any> {
   if (!code) exit();
   const game = await Game.findOne({
     where: {
       code: code
     },
-    attributes: ['isOver', 'isStarted'],
     include: [
       {
         model: GameSettings
@@ -53,6 +52,35 @@ export async function getGameByCode(code: string): Promise<any> {
   return game;
 }
 
+export async function addPlayerToGame(userId: number, code: string): Promise<SuccessOutput | ErrorOutput> {
+  if (!userId || !code) throw "Erreur interne au serveur";
+  try {
+    const currentBoard = await findBoardByPlayerId(userId);
+    if (currentBoard) throw "Une game est déjà en cours";
+    const game = await findGameByCode(code);
+    if (!game || !game.Boards || game.Boards.length >= 4) throw "Une erreur est survenue";
+
+    const board: Board = await Board.create({ avatar: 1, isReady: false, GameId: game.id, PlayerId: userId });
+    if (!board) throw "Une erreur est survenue";
+    return new SuccessOutput({ board });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function leaveGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
+  if (!userId) throw "Erreur interne au serveur";
+  try {
+    const board = await findBoardByPlayerId(userId);
+    if (board == null) throw "Aucune partie en cours";
+    const gameId = board.GameId;
+    await board.destroy();
+    return new SuccessOutput({ gameId });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
 export async function syncModel(): Promise<SuccessOutput | ErrorOutput> {
   try {
     const s = await seq;
@@ -64,12 +92,11 @@ export async function syncModel(): Promise<SuccessOutput | ErrorOutput> {
 }
 
 export async function getGameByPlayerId(userId: number): Promise<SuccessOutput | ErrorOutput> {
-  if (!userId) throw "Erreur interne au serveur";
   try {
+    if (!userId) throw "Erreur interne au serveur";
     const board = await findBoardByPlayerId(userId);
     if (board == null) throw "Aucune partie en cours";
     const boards = await findBoardsByGameId(board.GameId);
-    console.log(boards?boards[0].Game:null)
     return new SuccessOutput({ game: board.Game, board, boards });
   } catch (error) {
     return handleError(error);
@@ -108,7 +135,7 @@ export async function createGame(userId: number): Promise<SuccessOutput | ErrorO
   }
 }
 
-export async function getPlayerByName(username: string): Promise<Player|null> {
+export async function getPlayerByName(username: string): Promise<Player | null> {
   if (!username) return null;
   try {
     const player = await Player.findOne({
@@ -122,7 +149,7 @@ export async function getPlayerByName(username: string): Promise<Player|null> {
   }
 }
 
-export async function getPlayerById(userId: number): Promise<Player|null> {
+export async function getPlayerById(userId: number): Promise<Player | null> {
   if (!userId) return null;
   try {
     const player = await Player.findByPk(userId);
@@ -132,7 +159,7 @@ export async function getPlayerById(userId: number): Promise<Player|null> {
   }
 }
 
-export async function findBoardByPlayerId(userId: number): Promise<Board|null> {
+export async function findBoardByPlayerId(userId: number): Promise<Board | null> {
   if (!userId) return null;
   try {
     const board = await Board.findOne({
@@ -150,26 +177,26 @@ export async function findBoardByPlayerId(userId: number): Promise<Board|null> {
   }
 }
 
-export async function findBoardsByGameId(gameId: number): Promise<Board[]|null> {
+export async function findBoardsByGameId(gameId: number): Promise<Board[] | null> {
   if (!gameId) return null;
   try {
-  const game = await Game.findByPk(gameId, {
-    include: [{
-      model: Board,
+    const game = await Game.findByPk(gameId, {
       include: [{
-        model: Player,
-        attributes: ['id', 'username']
+        model: Board,
+        include: [{
+          model: Player,
+          attributes: ['id', 'username']
+        }]
       }]
-    }]
-  });
-  if (!game) throw "Erreur";
-  return game.Boards;
-} catch (error) {
-  return null;
-}
+    });
+    if (!game) throw "Erreur";
+    return game.Boards;
+  } catch (error) {
+    return null;
+  }
 }
 
-export async function createPlayer(username: string, email: string, password: string) : Promise<SuccessOutput | ErrorOutput>{
+export async function createPlayer(username: string, email: string, password: string): Promise<SuccessOutput | ErrorOutput> {
   try {
     if (!username || !email || !password) throw "Erreur interne au serveur";
     if (await exports.getPlayerByName(username) != null) throw "Ce nom d'utilisateur est déjà prit";

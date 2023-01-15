@@ -8,13 +8,6 @@ import { SuccessOutput, ErrorOutput } from "./src/data";
 export async function handleSocket(socket: Socket, io: Server<any, any, DefaultEventsMap, any>): Promise<void> {
   // Global Socket
   socket.onAny((eventName, ...args) => receiveLog(socket, eventName, args));
-  // Socket handler
-  socket.on("game_gameId_get", async (code, callback) => {
-    if (!code || !callback) return;
-    const response = await dataManager.getGameByCode(code);
-    //await sleep(500);
-    callback({ response });
-  });
 
   socket.on("administrator_sync_db", () => {
     dataManager.syncModel();
@@ -24,6 +17,44 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     if (!callback) return;
     if ((socket as any).decoded) {
       callback({ success: true, data: (socket as any).decoded });
+    } else {
+      callback({ success: false, data: null });
+    }
+  });
+
+  // Socket handler
+  socket.on("join_game", async (code, callback) => {
+    if (!code || !callback) return;
+    if (!(socket as any).decoded) return;
+    const { id } = (socket as any).decoded;
+    await dataManager.addPlayerToGame(id, code);
+    // Verification
+    const board: SuccessOutput | ErrorOutput = await dataManager.getGameByPlayerId(id);
+    if (board instanceof SuccessOutput) {
+      console.log("p=", board.data.Player)
+      socket.join(board.data.game.id);
+      // Broadcast
+      socket.rooms.forEach((room: any) => {
+        if (Number.isInteger(room)) {
+          socket.to(room).emit("newPlayer", { Board: board.data.boards.find((x: any) => x.PlayerId === id) });
+        }
+      })
+      callback({ success: true, data: null });
+    } else {
+      callback({ success: false, data: null });
+    }
+  });
+
+  socket.on("leave_lobby", async (callback) => {
+    if (!callback) return;
+    if (!(socket as any).decoded) return;
+    const { id } = (socket as any).decoded;
+    if (!id) return;
+    const board: SuccessOutput | ErrorOutput = await dataManager.leaveGame(id);
+    if (board instanceof SuccessOutput) {
+      socket.to(board.data.gameId).emit("removePlayer", id);
+      socket.rooms.clear();
+      callback({ success: true, data: null });
     } else {
       callback({ success: false, data: null });
     }

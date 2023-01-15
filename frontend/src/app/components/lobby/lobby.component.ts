@@ -36,18 +36,26 @@ export class LobbyComponent implements OnInit{
       this.router.navigateByUrl("/");
     }
     this.socket = socketService.socket;
-    this.socket.on("newPlayer", (player) => {
-      console.log(player);
+    this.socket.on("newPlayer", (board) => {
+      console.log(board);
+      this.boards.push(board.Board);
     });
 
-    this.socket.on("removePlayer", (player) => {
-      console.log(player);
+    this.socket.on("removePlayer", (playerId) => {
+      const index = this.boards.findIndex((x: any) => x.PlayerId === playerId);
+      if (index > -1) {
+        this.boards.splice(index, 1);
+      }
     });
 
     this.socket.on("update_lobby_state", (data) => {
       if (data.PlayerId === this.board.PlayerId) this.loading = false;
       this.boards.find((x: any) => x.PlayerId === data.PlayerId).isReady = data.isReady;
     });
+  }
+
+  kick() {
+
   }
 
   async copy() {
@@ -84,6 +92,14 @@ export class LobbyComponent implements OnInit{
 
   ngOnInit(): void {
 
+  }
+
+  leave() {
+    this.socket.emit("leave_lobby", (response: any) => {
+      if (response.success) {
+        this.router.navigateByUrl("/");
+      }
+    });
   }
 
   readyToStart() {
