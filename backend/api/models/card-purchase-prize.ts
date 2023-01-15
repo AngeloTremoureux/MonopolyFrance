@@ -1,4 +1,4 @@
-import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
+import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
 import CardSettings from './card-settings';
 
@@ -6,6 +6,7 @@ class CardPurchasePrize extends Model<InferAttributes<CardPurchasePrize>, InferC
   id!: CreationOptional<number>;
   cost!: number;
   cardSettingsId!: CreationOptional<number>;
+  declare CardSettings: NonAttribute<CardSettings[]>;
   static associate: (models: any) => void;
 }
 
@@ -24,7 +25,10 @@ CardPurchasePrize.init({
       key: 'id'
     }
   }
-}, { sequelize });
+}, {
+  sequelize,
+  modelName: 'Card_Purchase_Prize',
+});
 
 CardPurchasePrize.associate = function (models) {
   CardPurchasePrize.belongsTo(models.Card_Settings);

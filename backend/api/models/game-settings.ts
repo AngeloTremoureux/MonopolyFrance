@@ -1,4 +1,4 @@
-import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
+import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
 import Game from './game';
 import GameState from './game_state';
@@ -8,8 +8,10 @@ class GameSettings extends Model<InferAttributes<GameSettings>, InferCreationAtt
   timer!: number;
   playerTurn!: CreationOptional<number>;
   nbPlayers!: CreationOptional<number>;
-  gameId!: CreationOptional<number>;
-  gameStateId!: CreationOptional<number>;
+  GameId!: CreationOptional<number>;
+  GameStateId!: CreationOptional<number>;
+  declare Game: NonAttribute<Game>;
+  declare Game_States: NonAttribute<GameState[]>;
   static associate: (models: any) => void;
 }
 
@@ -28,7 +30,7 @@ GameSettings.init({
     type: DataTypes.INTEGER,
     allowNull: true
   },
-  gameId: {
+  GameId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
@@ -36,7 +38,7 @@ GameSettings.init({
       key: 'id'
     }
   },
-  gameStateId: {
+  GameStateId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {

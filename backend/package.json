@@ -5,10 +5,12 @@
     "start": "ts-node api/src/entry.ts",
     "makemig": "makemigration --name",
     "dbmig": "sequelize db:migrate",
-    "practice": "ts-node -T api/practice.ts"
+    "practice": "ts-node -T api/practice.ts",
+    "db-sync": "ts-node api/models/index.ts"
   },
   "private": true,
   "dependencies": {
+    "@top-gg/sequelize-typescript-auto-migrations": "^0.0.2",
     "body-parser": "^1.20.1",
     "crypto": "^1.0.1",
     "crypto-js": "^4.1.1",
@@ -19,6 +21,8 @@
     "rxjs": "~7.5.0",
     "save": "^2.9.0",
     "sequelize": "^6.28.0",
+    "sequelize-auto-migrations": "^1.0.3",
+    "sequelize-migration-generator": "^0.1.0",
     "sequelize-typescript-migration-lts": "^3.2.3",
     "tslib": "^2.3.0",
     "zone.js": "~0.12.0"

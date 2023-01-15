@@ -1,4 +1,4 @@
-import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
+import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
 import CardSettings from './card-settings';
 
@@ -6,6 +6,7 @@ class CardTaxAmount extends Model<InferAttributes<CardTaxAmount>, InferCreationA
   id!: CreationOptional<number>;
   cost!: number;
   cardSettingsId!: CreationOptional<number>;
+  declare Card_Settings: NonAttribute<CardSettings[]>;
   static associate: (models: any) => void;
 }
 

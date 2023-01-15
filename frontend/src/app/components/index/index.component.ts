@@ -1,4 +1,5 @@
 import { Component, ViewEncapsulation } from '@angular/core';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/services/auth/auth.service';
 import { GameManagerService } from 'src/app/services/gameManager/game-manager.service';
 
@@ -13,7 +14,11 @@ import { GameManagerService } from 'src/app/services/gameManager/game-manager.se
 })
 export class IndexComponent {
 
-  constructor(private authService: AuthService, private gameService: GameManagerService) {}
+  constructor(
+    private authService: AuthService,
+    private gameService: GameManagerService,
+    private router: Router
+  ) {}
 
   ngOnInit() {
     if (this.authService.getIsConnected() === null) this.authService.isLoggedIn();
@@ -29,7 +34,11 @@ export class IndexComponent {
   }
 
   create() {
-    this.gameService.createGame();
+    this.gameService.createGame((e: any) => {
+      if (e) {
+        this.router.navigateByUrl("/lobby")
+      }
+    });
   }
 
   getUser() {

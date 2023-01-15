@@ -15,6 +15,10 @@ export async function handleSocket(socket: Socket): Promise<void> {
     callback({ response });
   });
 
+  socket.on("administrator_sync_db", () => {
+    dataManager.syncModel();
+  });
+
   socket.on("socket_is_logged", async (callback) => {
     if (!callback) return;
     if ((socket as any).decoded) {
@@ -24,12 +28,32 @@ export async function handleSocket(socket: Socket): Promise<void> {
     }
   });
 
+  socket.on("get_current_game", async (callback) => {
+    if (!callback) return;
+    const { id } = (socket as any).decoded;
+    const board: SuccessOutput | ErrorOutput = await dataManager.getGameByPlayerId(id);
+    if (board instanceof SuccessOutput) {
+      console.log("p=", board.data.boards.Player)
+      callback({ success: true, data: board.data });
+    } else {
+      callback({ success: false, data: null });
+    }
+  });
+
+
+
   socket.on("create_game", async (callback) => {
     if (!callback) return;
     if (!(socket as any).decoded) return;
     const { id } = (socket as any).decoded;
-    const game = await dataManager.createGame(id);
-    callback({ game });
+    if (!id) return;
+    const game: SuccessOutput | ErrorOutput = await dataManager.createGame(id);
+    if (game instanceof SuccessOutput) {
+      callback({ success: true, data: game.data });
+    } else {
+      console.log("error", game)
+      callback({ success: false, data: game });
+    }
   });
 
   socket.on("signup", async (data, callback) => {

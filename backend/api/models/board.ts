@@ -1,4 +1,4 @@
-import { DataTypes, Model, Optional, ModelCtor, ModelStatic, CreationOptional, InferAttributes, InferCreationAttributes } from 'sequelize';
+import { DataTypes, Model, Optional, ModelCtor, ModelStatic, CreationOptional, InferAttributes, InferCreationAttributes, NonAttribute } from 'sequelize';
 import { sequelize } from '.';
 import Game from './game';
 import Player from './player';
@@ -8,8 +8,10 @@ class Board extends Model<InferAttributes<Board>, InferCreationAttributes<Board>
   isReady!: boolean;
   avatar!: number|null;
   money!: CreationOptional<number>;
-  gameId!: CreationOptional<number>;
-  playerId!: CreationOptional<number>;
+  GameId!: CreationOptional<number>;
+  PlayerId!: CreationOptional<number>;
+  declare Game: NonAttribute<Game>;
+  declare Player: NonAttribute<Player>;
   static associate: (models: any) => void;
 }
 
@@ -30,7 +32,7 @@ Board.init({
     allowNull: false,
     defaultValue: 2000000
   },
-  gameId: {
+  GameId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
@@ -38,7 +40,7 @@ Board.init({
       key: 'id'
     }
   },
-  playerId: {
+  PlayerId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
@@ -46,7 +48,10 @@ Board.init({
       key: 'id'
     }
   }
-}, { sequelize });
+}, {
+  sequelize,
+  modelName: 'Board',
+});
 
 Board.associate = function (models) {
   Board.belongsTo(models.Game);
@@ -55,5 +60,4 @@ Board.associate = function (models) {
 };
 
 export default Board;
-
 

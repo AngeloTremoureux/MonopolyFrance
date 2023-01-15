@@ -1,4 +1,5 @@
-import { join } from 'path'
+import path from 'path';
+
 import { Dialect } from 'sequelize';
 import { Sequelize } from "sequelize-typescript";
 import { SequelizeTypescriptMigration } from "sequelize-typescript-migration-lts";
@@ -10,15 +11,17 @@ const bootstrap = async () => {
 
   const sequelize: Sequelize = new Sequelize({
     username: db.username,
-    password: db.password,
+    password: undefined,
     database: db.database,
     dialect: (db.dialect as Dialect),
     host: db.host,
     logging: false
   });
 
+  console.log("sequelize", sequelize);
+
   const result = await SequelizeTypescriptMigration.makeMigration(sequelize, {
-    outDir: join(__dirname, './migrations'),
+    outDir: path.join(__dirname, './migrations'),
     migrationName: "init",
     preview: false,
   });

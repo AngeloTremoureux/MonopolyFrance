@@ -1,11 +1,16 @@
-import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
+import { CreationOptional, DataTypes, HasManyGetAssociationsMixin, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
+import Board from './board';
+import Player from './player';
 
 class Game extends Model<InferAttributes<Game>, InferCreationAttributes<Game>> {
   id!: CreationOptional<number>;
   code!: string;
   isOver!: CreationOptional<boolean>;
   isStarted!: CreationOptional<boolean>;
+  declare Player: NonAttribute<Player>;
+  declare Boards: NonAttribute<Board[]>;
+  declare getBoards: HasManyGetAssociationsMixin<Board>;
   static associate: (models: any) => void;
 }
 

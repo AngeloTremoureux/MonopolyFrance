@@ -11,7 +11,7 @@ import Game from './../models/game';
 import Player from './../models/player';
 import Position from './../models/position';
 
-import { Sequelize, sequelize } from './../models';
+import { Sequelize, sequelize, seq } from './../models';
 
 import CryptoJS from 'crypto-js';
 import crypto from 'crypto';
@@ -53,7 +53,28 @@ export async function getGameByCode(code: string): Promise<any> {
   return game;
 }
 
+export async function syncModel(): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    const s = await seq;
+    await s.sequelize.sync({ force: true });
+    return new SuccessOutput({ msg: "Success" });
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
+export async function getGameByPlayerId(userId: number): Promise<SuccessOutput | ErrorOutput> {
+  if (!userId) throw "Erreur interne au serveur";
+  try {
+    const board = await findBoardByPlayerId(userId);
+    if (board == null) throw "Aucune partie en cours";
+    const boards = await findBoardsByGameId(board.GameId);
+    console.log(boards?boards[0].Game:null)
+    return new SuccessOutput({ game: board.Game, board, boards });
+  } catch (error) {
+    return handleError(error);
+  }
+}
 
 export async function createGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
   if (!userId) throw "Erreur interne au serveur";
@@ -62,9 +83,9 @@ export async function createGame(userId: number): Promise<SuccessOutput | ErrorO
     const game: Game = await Game.create({ code: generateUniqueCode(codes) });
     const player = await getPlayerById(userId);
     if (player == null) throw "Ce nom d'utilisateur n'existe pas";
-    const gameSettings = GameSettings.create({ timer: 40, gameId: game.id });
-    const board = await Board.create({ avatar: 1, isReady: false, gameId: game.id, playerId: player.id });
-    return new SuccessOutput({ Game });
+    await GameSettings.create({ timer: 40, GameId: game.id });
+    await Board.create({ avatar: 1, isReady: false, GameId: game.id, PlayerId: player.id });
+    return new SuccessOutput({ game });
   } catch (error) {
     return handleError(error);
   }
@@ -92,6 +113,44 @@ export async function getPlayerById(userId: number): Promise<Player|null> {
   } catch (error) {
     return null;
   }
+}
+
+export async function findBoardByPlayerId(userId: number): Promise<Board|null> {
+  if (!userId) return null;
+  try {
+    const board = await Board.findOne({
+      where: {
+        GameId: userId
+      },
+      include: [{
+        model: Game
+      }]
+    });
+    if (!board) throw "Erreur";
+    return board;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+export async function findBoardsByGameId(gameId: number): Promise<Board[]|null> {
+  if (!gameId) return null;
+  try {
+  const game = await Game.findByPk(gameId, {
+    include: [{
+      model: Board,
+      include: [{
+        model: Player,
+        attributes: ['id', 'username']
+      }]
+    }]
+  });
+  if (!game) throw "Erreur";
+  return game.Boards;
+} catch (error) {
+  return null;
+}
 }
 
 export async function createPlayer(username: string, email: string, password: string) : Promise<SuccessOutput | ErrorOutput>{

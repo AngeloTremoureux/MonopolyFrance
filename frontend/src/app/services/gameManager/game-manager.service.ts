@@ -6,12 +6,20 @@ import { SocketService } from '../socket/socket.service';
 })
 export class GameManagerService {
 
+  public board: any;
+  public boards: any;
+  public game: any;
+
   constructor(private socketService: SocketService) {}
 
-  createGame() {
+  public createGame(callback: Function) {
     const socket = this.socketService.socket;
     socket.emit("create_game", (data: any) => {
-      console.log(data);
+      if (data && data.success && data.data.game) {
+        callback(data.data.game);
+      } else {
+        callback(null);
+      }
     });
   }
 }

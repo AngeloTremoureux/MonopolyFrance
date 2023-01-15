@@ -1,4 +1,4 @@
-import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, Optional } from 'sequelize';
+import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
 import CardSettings from './card-settings';
 import Game from './game';
@@ -7,9 +7,12 @@ import Player from './player';
 class Card extends Model<InferAttributes<Card>, InferCreationAttributes<Card>> {
   id!: CreationOptional<number>;
   level!: number;
-  cardSettingsId!: CreationOptional<number>;
-  gameId!: CreationOptional<number>;
-  playerId!: CreationOptional<number>
+  CardSettingsId!: CreationOptional<number>;
+  GameId!: CreationOptional<number>;
+  PlayerId!: CreationOptional<number>;
+  declare Card_Setting: NonAttribute<CardSettings>;
+  declare Games: NonAttribute<Game[]>;
+  declare Players: NonAttribute<Player[]>;
   static associate: (models: any) => void;
 }
 
@@ -20,7 +23,7 @@ Card.init({
     autoIncrement: true
   },
   level: DataTypes.INTEGER,
-  cardSettingsId: {
+  CardSettingsId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
@@ -28,7 +31,7 @@ Card.init({
       key: 'id'
     }
   },
-  gameId: {
+  GameId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
@@ -36,7 +39,7 @@ Card.init({
       key: 'id'
     }
   },
-  playerId: {
+  PlayerId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
