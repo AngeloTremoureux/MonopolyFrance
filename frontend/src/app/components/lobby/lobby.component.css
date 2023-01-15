@@ -8,3 +8,10 @@
 .card .card-footer .btn {
   transition: 0.3s;
 }
+
+.button-19.btn-start:after {
+  background-color: #87b77b;
+}
+.button-19.btn-start {
+  background: #5a8b4e;
+}

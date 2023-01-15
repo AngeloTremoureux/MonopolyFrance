@@ -31,6 +31,7 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
 
   socket.on("get_current_game", async (callback) => {
     if (!callback) return;
+    if (!(socket as any).decoded) return;
     const { id } = (socket as any).decoded;
     const board: SuccessOutput | ErrorOutput = await dataManager.getGameByPlayerId(id);
     if (board instanceof SuccessOutput) {
