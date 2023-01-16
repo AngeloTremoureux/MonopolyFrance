@@ -1,4 +1,4 @@
-import { Game } from "../game/game";
+import { GameComponent } from "src/app/components/game/game.component";
 import { Utils } from "../utils/utils";
 
 export class Player {
@@ -8,19 +8,20 @@ export class Player {
   public position: number;
   public team: number;
   public isEliminated: boolean;
+  public isMyTurn: boolean;
 
-  private game: Game;
+  private game: GameComponent;
   public character: THREE.Mesh | undefined;
   private manageQueueState: boolean;
   private moveQueue: number[];
 
-  constructor(game: Game, team: number, id: number, money: number, username: string, position: number) {
+  constructor(game: GameComponent, team: number, id: number, money: number, username: string, position: number, isMyTurn: boolean) {
       this.id = id;
       this.money = money;
       this.username = username;
       this.position = position;
       this.team = team;
-
+      this.isMyTurn = isMyTurn;
       this.game = game;
       this.createCharacters(team);
       this.manageQueueState = false;

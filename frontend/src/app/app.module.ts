@@ -12,7 +12,7 @@ import { LoginComponent } from './components/login/login.component';
 import { RegisterComponent } from './components/register/register.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ClipboardModule } from '@angular/cdk/clipboard';
-import { PlayComponent } from './components/play/play.component';
+import { GameComponent } from './components/game/game.component';
 
 @NgModule({
   declarations: [
@@ -22,7 +22,7 @@ import { PlayComponent } from './components/play/play.component';
     LobbyComponent,
     LoginComponent,
     RegisterComponent,
-    PlayComponent
+    GameComponent
   ],
   imports: [
     BrowserModule,

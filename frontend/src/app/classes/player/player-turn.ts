@@ -1,12 +1,12 @@
-import { Game } from "../game/game";
+import { GameComponent } from "src/app/components/game/game.component";
 import { Player } from "./player";
 
 export class PlayerTurn {
 
-    private game: Game;
+    private game: GameComponent;
     private playerTurn: number;
 
-    public constructor(game: Game, playerTurn: number) {
+    public constructor(game: GameComponent, playerTurn: number) {
         this.game = game;
         this.playerTurn = playerTurn;
     }

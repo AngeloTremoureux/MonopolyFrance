@@ -1,27 +1,35 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { SocketService } from 'src/app/services/socket/socket.service';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
+import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { io, Socket } from "socket.io-client";
 import * as THREE from 'three';
-import { BoardType, GameType, PlayerType } from 'src/app/classes/types/types';
+import { CardType, GameParameters, GameStateDataType, GameType } from 'src/app/classes/types/types';
+import { Player } from 'src/app/classes/player/player';
+import { Utils } from 'src/app/classes/utils/utils';
+import { Easing, Tween, update } from '@tweenjs/tween.js';
+import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
+import { Card } from 'src/app/classes/card/card';
+import { AudioController } from 'src/app/classes/audio/audio';
 
 @Component({
-  selector: 'app-play',
-  templateUrl: './play.component.html',
-  styleUrls: ['./play.component.css']
+  selector: 'app-game',
+  templateUrl: './game.component.html',
+  styleUrls: ['./game.component.css']
 })
-export class PlayComponent implements OnInit {
+export class GameComponent implements OnInit {
 
   /** Inputs */
-  @Input() boards!: BoardType[];
-  @Input() board!: BoardType;
-  @Input() game!: GameType;
+  @Input() boards!: any;
+  @Input() board!: any;
+  @Input() game!: any;
+
+  public parameters?: GameParameters;
 
   /** Scenes Layer */
-  private scene: THREE.Scene;
-  private scene2: THREE.Scene;
-  private scene3: THREE.Scene;
+  public scene: THREE.Scene;
+  public scene2: THREE.Scene;
+  public scene3: THREE.Scene;
 
   /** Loaders */
   private loader: THREE.ObjectLoader;
@@ -39,8 +47,8 @@ export class PlayComponent implements OnInit {
   private basicMaterials: THREE.MeshBasicMaterial[];
   private planeGeometries: THREE.PlaneGeometry[];
 
-  charactersQueue: PlayerType[];
-  characters: PlayerType[];
+  charactersQueue: Player[];
+  characters: Player[];
   font: any;
 
   /** Transport Layer (Socket) */
@@ -102,9 +110,9 @@ export class PlayComponent implements OnInit {
    * @returns void
    */
   public createDice(scene: THREE.Scene): void {
-    const that: PlayComponent = this;
+    const that: GameComponent = this;
     const dices = this.dices;
-    this.gltfLoader.load('assets/dice/scene.gltf', function (gltf) {
+    this.gltfLoader.load('assets/dice/scene.gltf', function (gltf: GLTF) {
       const dice1 = gltf.scene;
       dice1.visible = false;
       dice1.scale.divideScalar(7);
@@ -128,13 +136,23 @@ export class PlayComponent implements OnInit {
    * @returns void
    */
   public checkPlayerTurn(): void {
-    if (this.parameters.playerTurn && this.parameters.playerTurn.isMyTurn() && this.parameters.state === 1) {
+    if (this.parameters?.game.playerTurn && this.isMyTurn() && this.parameters.game.state.current.id === 1) {
       this.enableRollsButton();
     }
   }
 
+  private isMyTurn(): boolean | undefined {
+    if (!this.parameters) throw "Erreur";
+    return this.parameters.player.current.isMyTurn;
+  }
+
+  private getPlayerTurn(): Player | undefined {
+    if (!this.parameters) throw "Erreur";
+    return this.parameters.player.list.find(x => x.isMyTurn);
+  }
+
   public async checkModalState(): Promise<void> {
-    if (this.parameters.playerTurn && this.parameters.playerTurn.isMyTurn() && this.parameters.state === 2) {
+    if (this.parameters?.game.playerTurn && this.isMyTurn() && this.parameters.game.state.current.id === 2) {
       const numCard = await this.getCurrentParamPlayer()?.getNumCase();
       if (numCard) {
         this.manageModalCard(numCard)
@@ -142,32 +160,23 @@ export class PlayComponent implements OnInit {
     }
   }
 
-  public setGameState(state: number): void {
-    this.parameters.state = state;
+  public setGameState(state: GameStateDataType): void {
+    if (!this.parameters) throw "Erreur";
+    this.parameters.game.state.current = state;
   }
 
-  public getGameState(): number {
-    return this.parameters.state ? this.parameters.state : -1;
+  public getGameState(): GameStateDataType {
+    if (!this.parameters) throw "Erreur";
+    return this.parameters.game.state.current;
   }
 
   /**
    * Récupère les informations du joueur
-   * @returns PlayerType Informations
+   * @returns Player Le joueur et ses infos
    */
-  public getCurrentParamPlayer(): Player|null {
-    if (!this.parameters.players) {
-      return null;
-    }
-    const playerId = this.parameters.playerId;
-    let currentParam: Player|null = null;
-    let count: number = 0;
-    while (!currentParam && count < this.parameters.players.length) {
-      if (this.parameters.players[count].id === playerId) {
-        currentParam = this.parameters.players[count];
-      }
-      count++;
-    }
-    return currentParam;
+  public getCurrentParamPlayer(): Player | null {
+    if (!this.parameters) throw "Erreur";
+    return this.parameters.player.current;
   }
 
   /**
@@ -224,7 +233,7 @@ export class PlayComponent implements OnInit {
   }
 
   public async attachIcon(playerId: number) {
-    const player: Player|null = this.getCharacterById(playerId);
+    const player: Player | null = this.getCharacterById(playerId);
     if (!player || !player.character) {
       return;
     }
@@ -279,7 +288,7 @@ export class PlayComponent implements OnInit {
     let numero: number = 0;
     let tweenPosition: any;
     let totalFace: number = 0;
-    const that: Game = this;
+    const that: GameComponent = this;
     this.enableDices();
     this.dices.forEach(dice => {
       numero++;
@@ -299,18 +308,18 @@ export class PlayComponent implements OnInit {
       const positionX: number = (numero === 2) ? defaultPosition.x - Math.floor(Math.random() * 11 + 3) : defaultPosition.x;
       const positionZ: number = (numero === 2) ? defaultPosition.z : defaultPosition.z - Math.floor(Math.random() * 11 + 3);
       const positionY: number = Math.floor(Math.random() * 3 + 3);
-      const tweenRotation: TWEEN.Tween<THREE.Euler> = new TWEEN.Tween(diceObject.rotation)
+      const tweenRotation: Tween<THREE.Euler> = new Tween(diceObject.rotation)
         .to({ x: rotationX, y: rotationY, z: rotationZ }, 1050);
       const duration = (numero === 2) ? duration2 : duration1;
-      tweenPosition = new TWEEN.Tween(diceObject.position)
+      tweenPosition = new Tween(diceObject.position)
         .to({ x: positionX, y: positionY, z: positionZ }, duration);
-      tweenRotation.easing(TWEEN.Easing.Quadratic.Out);
-      tweenPosition.easing(TWEEN.Easing.Quadratic.Out);
+      tweenRotation.easing(Easing.Quadratic.Out);
+      tweenPosition.easing(Easing.Quadratic.Out);
       tweenRotation.start();
       tweenPosition.start();
     });
     tweenPosition.onComplete(function () {
-      const character: Player|null = that.getCharacterById(playerId);
+      const character: Player | null = that.getCharacterById(playerId);
       if (character) {
         character.moveTo(totalFace);
       }
@@ -323,7 +332,7 @@ export class PlayComponent implements OnInit {
    * @returns Player|null Joueur trouvé, null si aucun joueur trouvé
    */
   public getCharacterById(id: number): Player | null {
-    let character: Player|null = null;
+    let character: Player | null = null;
     let index = 0;
     while (!character && index < this.characters.length) {
       if (this.characters[index] && this.characters[index].id === id) {
@@ -341,7 +350,7 @@ export class PlayComponent implements OnInit {
    * @returns THREE.PlaneGeometry L'objet correspondant
    */
   private getPlaneGeometry(width: number, height: number): THREE.PlaneGeometry {
-    let returnPlane: THREE.PlaneGeometry|null = null;
+    let returnPlane: THREE.PlaneGeometry | null = null;
     let count = 0;
     while (count < this.planeGeometries.length && !returnPlane) {
       const geometry = this.planeGeometries[count];
@@ -382,7 +391,7 @@ export class PlayComponent implements OnInit {
    * @returns THREE.MeshBasicMaterial Le matériel correspondant
    */
   private getBasicMaterial(color?: number): THREE.MeshBasicMaterial {
-    let returnMesh: THREE.MeshBasicMaterial|null = null;
+    let returnMesh: THREE.MeshBasicMaterial | null = null;
     if (!Utils.isset(color)) {
       color = 0x000000;
     }
@@ -505,10 +514,8 @@ export class PlayComponent implements OnInit {
    * @returns Promise<void>
    */
   public manageModalCard(numero: number, params: any = null): void {
-    if (!this.parameters.cards) {
-      return;
-    }
-    const card: Card|undefined = this.parameters.cards[numero];
+    if (!this.parameters) throw "Erreur";
+    const card: Card | undefined = this.parameters.cards[numero];
     this.disableRollsButton();
     if (card.isVille() || card.isMonument()) {
       this.openModalPurchase(numero);
@@ -604,8 +611,9 @@ export class PlayComponent implements OnInit {
    * @returns void
    */
   private loadCharacters(): void {
-    const game: Game = this;
-    this.parameters.players?.forEach((player: Player) => {
+    if (!this.parameters) throw "Erreur";
+    const game: GameComponent = this;
+    this.parameters.player.list.forEach((player: Player) => {
       // Consider player is by default at position 1, so we need to remove
       // 1 from position to move player to position
       this.teleportCharacter(player, player.position - 1);
@@ -680,7 +688,7 @@ export class PlayComponent implements OnInit {
    * @returns THREE.Object3D<THREE.Event>|null La carte ou null
    */
   private getMonumentByCardName(cardName: string): THREE.Object3D<THREE.Event> | null {
-    let Mesh: THREE.Object3D<THREE.Event>|null = null;
+    let Mesh: THREE.Object3D<THREE.Event> | null = null;
     let countCustomScene = 0;
     const prizeMonument = this.scene2.getObjectByName("PRIZE_MONUMENT");
     if (!prizeMonument) {
@@ -703,7 +711,7 @@ export class PlayComponent implements OnInit {
    * @returns THREE.Object3D<THREE.Event> La carte ou null
    */
   private getMonopoleByCardName(plateau: THREE.Object3D<THREE.Event>, cardName: string): THREE.Object3D<THREE.Event> | null {
-    let Mesh: THREE.Object3D<THREE.Event>|null = null;
+    let Mesh: THREE.Object3D<THREE.Event> | null = null;
     let countMonopoles = 0;
     while (!Mesh && countMonopoles < plateau.children[0].children.length) {
       let countMesh = 0;
@@ -736,7 +744,7 @@ export class PlayComponent implements OnInit {
    * @param  {number} numCard Numéro de la carte
    * @returns THREE.Object3D<THREE.Event> La carte
    */
-  private verifAlreadyPrizeSet(plateau: THREE.Object3D<THREE.Event>, numCard: number): THREE.Object3D<THREE.Event>|null {
+  private verifAlreadyPrizeSet(plateau: THREE.Object3D<THREE.Event>, numCard: number): THREE.Object3D<THREE.Event> | null {
     if (this.isMonument(numCard)) {
       const VerifyCardIfExist = this.getMonumentByCardName("PRIZE_" + numCard.toString());
       return VerifyCardIfExist;
@@ -766,6 +774,7 @@ export class PlayComponent implements OnInit {
    * @returns Promise<void>
    */
   private async writePrizeCard(plateau: THREE.Object3D<THREE.Event>, numCard: number, prize: number): Promise<void> {
+    if (!this.parameters) throw "Erreur";
     await this.removePrizeCard(plateau, numCard);
     const Mesh = this.getMonopoleByCardName(plateau, numCard.toString());
     if (Mesh && this.parameters.cards) {
@@ -780,7 +789,7 @@ export class PlayComponent implements OnInit {
    * @param  {number} numCard Numéro de la carte à vérifier
    * @returns THREE.Object3D<THREE.Event>
    */
-  private verifAlreadyHouseSet(plateau: THREE.Object3D<THREE.Event>, numCard: number): THREE.Object3D<THREE.Event>|null {
+  private verifAlreadyHouseSet(plateau: THREE.Object3D<THREE.Event>, numCard: number): THREE.Object3D<THREE.Event> | null {
     const VerifyCardIfExist = this.getMonopoleByCardName(plateau, "HOUSE_" + numCard.toString());
     return VerifyCardIfExist;
   }
@@ -808,7 +817,7 @@ export class PlayComponent implements OnInit {
    */
   private async setHouseLevel(plateau: THREE.Object3D<THREE.Event>, numCard: number, color: number, level: number): Promise<void> {
     this.removeHouse(plateau, numCard);
-    const Mesh: THREE.Object3D<THREE.Event>|null = this.getMonopoleByCardName(plateau, numCard.toString());
+    const Mesh: THREE.Object3D<THREE.Event> | null = this.getMonopoleByCardName(plateau, numCard.toString());
     if (Mesh) {
       const card = await this.generateHouse(Mesh, Mesh.userData['isRotateNeeds'], color, level);
       card.name = "HOUSE_" + numCard;
@@ -822,14 +831,12 @@ export class PlayComponent implements OnInit {
    * @return void
    */
   public async tryBuyCurrentHouse(level: number) {
+    if (!this.parameters) throw "Erreur";
     // TO DO : Condition- If player turn
-    if (this.parameters.playerTurn && this.parameters.playerTurn.isMyTurn()) {
+    if (this.isMyTurn()) {
       // TO DO : Condition- If place is not owned
-      const pId = this.parameters.playerId ? this.parameters.playerId : -1;
-      const currentPlayer: Player|null = this.getCharacterById(pId);
-      if (!currentPlayer || !this.parameters.cards ) {
-        return;
-      }
+      const currentPlayer: Player | null = this.getCurrentParamPlayer();
+      if (!currentPlayer || !this.parameters.cards) return;
       const numCase: number = await currentPlayer.getNumCase();
       const currentCard: Card = this.parameters.cards[numCase];
       if (Utils.isset(numCase) && !currentCard.isOwned()) {
@@ -837,7 +844,7 @@ export class PlayComponent implements OnInit {
         if (level) {
           console.log("ok")
           // TO DO : Condition- If player has enough money
-          if (currentCard.prize && currentPlayer.getMoney() - currentCard.prize.purchasePrize[level - 1] >= 0) {
+          if (currentCard.prize && currentPlayer.getMoney() - currentCard.prize.purchasePrize[level - 1].cost >= 0) {
             this.socket.emit('try_purchase_card', { level: level });
           }
         }
@@ -881,9 +888,7 @@ export class PlayComponent implements OnInit {
    * @returns Promise<void>
    */
   public async managePurchasedCards(plateau: THREE.Object3D<THREE.Event>): Promise<void> {
-    if (!this.parameters.cards) {
-      return;
-    }
+    if (!this.parameters) throw "Erreur";
     for (const card of this.parameters.cards) {
       if (card && card.isOwned()) {
         await this.purchaseCard(plateau, card);
@@ -892,19 +897,15 @@ export class PlayComponent implements OnInit {
   }
 
   private async purchaseCard(plateau: THREE.Object3D<THREE.Event>, card: Card) {
-    if (!card.owner || !card.level || !card.prize) {
-      return;
-    }
+    if (!this.parameters || !card.owner || !card.level || !card.prize) throw "Erreur";
     await this.setHouseLevel(plateau, card.getPosition(), card.owner.team, card.level);
-    await this.writePrizeCard(plateau, card.getPosition(), card.prize.taxAmount[card.level - 1]);
+    await this.writePrizeCard(plateau, card.getPosition(), card.prize.taxAmount[card.level - 1].cost);
   }
 
   private async verifOpenModals() {
-    if (this.parameters.playerTurn && this.parameters.playerTurn.isMyTurn() && this.parameters.state === 2) {
+    if (this.isMyTurn() && this.getGameState().id === 2) {
       const param = this.getCurrentParamPlayer();
-      if (!param) {
-        return;
-      }
+      if (!param) return;
       const numCase = await param.getNumCase();
       this.manageModalCard(numCase, null)
     }
@@ -912,14 +913,12 @@ export class PlayComponent implements OnInit {
 
   /**
    * Configure le plateau en plaçant les données du plateau au bon endroit (images, textes, etc)
-   * @param  {string} playerId ID du joueur
-   * @param  {string} gameId ID de la partie
    * @returns Promise<void>
    */
-  public async configGame(playerId: string, gameId: string): Promise<void> {
+  public async configGame(): Promise<void> {
     this.font = await this.loadAsyncFont('assets/Roboto_Black_Regular.json');
     const plateau: THREE.Object3D<THREE.Event> = await this.loadAsyncModel('assets/plateau.json');
-    await this.setDefaultsParameters(playerId, gameId);
+    await this.setDefaultsParameters();
     this.setUpCardNames(plateau);
     await this.configCardAssets(plateau);
     await this.configCardMonopoleAssets(plateau);
@@ -1114,25 +1113,24 @@ export class PlayComponent implements OnInit {
     }
     const that = this;
     const vector3: THREE.Vector3 = this.getCharacterVectorNextPosition(character);
-    const Tween = new TWEEN.Tween(character.position)
-      .to({ x: vector3.x, y: vector3.y + .1, z: vector3.z }, 225)
-    Tween.start();
-    Tween.easing(TWEEN.Easing.Quintic.InOut);
-    Tween.onComplete(function () {
-      const Tween = new TWEEN.Tween(character.position)
-        .to({ x: vector3.x, y: vector3.y, z: vector3.z }, 225);
-      Tween.start();
-      Tween.easing(TWEEN.Easing.Quintic.InOut);
-      Tween.onComplete(function () {
+    const tween = new Tween(character.position).to({ x: vector3.x, y: vector3.y + .1, z: vector3.z }, 225)
+    tween.start();
+    tween.easing(Easing.Quintic.InOut);
+    tween.onComplete(function () {
+      const tween = new Tween(character.position).to({ x: vector3.x, y: vector3.y, z: vector3.z }, 225);
+      tween.start();
+      tween.easing(Easing.Quintic.InOut);
+      tween.onComplete(function () {
         if (nbCases > 1) {
           nbCases--;
           that.moveCharacterBy(player, nbCases);
         } else {
           that.disableDices();
-          if (that.parameters.playerTurn.isMyTurn()) {
+          if (that.isMyTurn()) {
             that.socket.emit('game_end_move');
           }
-          that.parameters.playerTurn.getPlayerTurn().getNumCase().then((numCase) => {
+          that.getPlayerTurn()?.getNumCase().then((numCase) => {
+            if (!that.parameters) return;
             if ([1, 2].includes(that.parameters.cards[numCase].getType().id)) {
               that.setPlayerBuyState(player);
               that.playCashRegister();
@@ -1148,14 +1146,12 @@ export class PlayComponent implements OnInit {
   }
 
   public async setCardOwner(numCard: number, level: number, playerId: number): Promise<void> {
-    console.log("set card olwner")
-    if (numCard && level && playerId) {
-      const card = this.parameters.cards[numCard];
-      card.level = level;
-      card.ownerId = playerId;
-      card.owner = this.getCharacterById(playerId);
-      await this.purchaseCard(this.scene.children[0], this.parameters.cards[numCard])
-    }
+    if (!this.parameters || !numCard || !level || !playerId) return;
+    const card = this.parameters.cards[numCard];
+    card.level = level;
+    card.ownerId = playerId;
+    card.owner = this.getCharacterById(playerId);
+    await this.purchaseCard(this.scene.children[0], this.parameters.cards[numCard])
   }
 
   /**
@@ -1332,6 +1328,49 @@ export class PlayComponent implements OnInit {
   }
 
   /**
+   * Configure les paramètres par défaut du jeu
+   * @param  {string} playerId ID du joueur
+   * @param  {string} gameId ID de la partie
+   * @returns Promise<void>
+   */
+  private async setDefaultsParameters(): Promise<void> {
+    if (!this.parameters) throw "Erreur";
+    this.socket.emit('get_game_data', ((data: any) => {
+      if (!data) return;
+
+    }))
+
+    this.parameters.players = [];
+    this.parameters.cards = [];
+    const game: Game = this;
+    this.parameters.playerId = parseInt(playerId);
+    this.parameters.gameId = parseInt(gameId);
+    this.socket.emit("get_cards", (cards: any) => {
+      if (cards) {
+        cards.forEach((card: any) => {
+          const Card_Type: CardType = {
+            id: card.Card_Type.id,
+            nom: card.Card_Type.nom
+          }
+          const purchasePrize: number[] = [];
+          const taxAmount: number[] = [];
+          card.Card_Purchase_Prizes.forEach((prize: any) => {
+            purchasePrize.push(prize.cost)
+          });
+          card.Card_Tax_Amounts.forEach((tax: any) => {
+            taxAmount.push(tax.cost)
+          });
+          const Card_Prize: CardPrizeType = {
+            purchasePrize,
+            taxAmount
+          };
+          if (game.parameters.cards)
+            game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
+        });
+      }
+    });
+
+  /**
    * Génère le texte d'une case dans un angle
    * @param  {string} title Texte à afficher
    * @param  {THREE.Mesh} Mesh Case cible
@@ -1435,7 +1474,7 @@ export class PlayComponent implements OnInit {
    * @returns void
    */
   public animate(): void {
-    TWEEN.update();
+    update();
     this.renderer.clear();
     this.renderer.render(this.scene, this.camera);
     this.renderer.clearDepth();
