@@ -1100,35 +1100,35 @@
 	"images": [
 		{
 			"uuid": "e5aaaf7c-7926-4aaf-8584-6291aa8732eb",
-			"url": "http://localhost:3000/images/game/chance.png"
+			"url": "game/chance.png"
 		},
 		{
 			"uuid": "424a723a-bc35-4719-9705-1bef93825fbc",
-			"url": "http://localhost:3000/images/game/floor.png"
+			"url": "game/floor.png"
 		},
 		{
 			"uuid": "424a723a-bc31-4719-9705-1bef93825faa",
-			"url": "http://localhost:3000/images/game/bgisland.png"
+			"url": "game/bgisland.png"
 		},
 		{
 			"uuid": "424a723a-bc31-1234-9005-1bef93825faa",
-			"url": "http://localhost:3000/images/game/bgairport.png"
+			"url": "game/bgairport.png"
 		},
 		{
 			"uuid": "424a723a-bc31-4719-9005-1bef93825faa",
-			"url": "http://localhost:3000/images/game/bgcdm.png"
+			"url": "game/bgcdm.png"
 		},
 		{
 			"uuid": "424a723a-bc31-4719-9705-1bef93825fbb",
-			"url": "http://localhost:3000/images/game/taxfloor.png"
+			"url": "game/taxfloor.png"
 		},
 		{
 			"uuid": "c78e64d7-cadb-4b16-8811-024518b9e3df",
-			"url": "http://localhost:3000/images/game/monument_card.png"
+			"url": "game/monument_card.png"
 		},
 		{
 			"uuid": "3b86d0ab-0d5a-479c-8630-7434e2f58c59",
-			"url": "http://localhost:3000/images/game/startbg.png"
+			"url": "game/startBG.png"
 		}],
 	"object": {
 		"uuid": "134caa98-2722-4d56-9f1d-f77eea00e75d",

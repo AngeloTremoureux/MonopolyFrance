@@ -99,6 +99,19 @@ export async function kickPlayerFromGame(fromPlayerId: number, toPlayerId: numbe
   }
 }
 
+export async function getGameData(playerId: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!playerId) throw "Erreur interne au serveur";
+    const board: Board|null= await findBoardByPlayerId(playerId);
+    if (!board) throw "Erreur interne au serveur";
+    const game: Game|null = await findGameData(board.Game.id);
+    if (!game) throw "Erreur interne au serveur";
+    return new SuccessOutput({ game });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
 export async function removePlayerFromGame(userId: number): Promise<SuccessOutput | ErrorOutput> {
   if (!userId) throw "Erreur interne au serveur";
   try {
@@ -238,6 +251,52 @@ export async function findBoardByPlayerId(userId: number): Promise<Board | null>
     return null;
   }
 }
+
+export async function findGameData(gameId: number): Promise<Game | null> {
+  try {
+    if (!gameId) throw "Erreur interne";
+    const game = await Game.findByPk(gameId, {
+      include: [{
+        model: Board,
+        include: [{
+          model: Player,
+          attributes: ['id', 'username']
+        }, {
+          model: Position,
+          include: [{
+            model: CardSettings
+          }]
+        }]
+      }, {
+        model: GameSettings,
+        include: [{
+          model: GameState
+        }]
+      }, {
+        model: Card,
+        include: [{
+          model: CardSettings,
+          include: [{
+            model: CardType
+          }, {
+            model: CardTaxAmount
+          }, {
+            model: CardPurchasePrize
+          }, {
+            model: Position
+          }]
+        }, {
+          model: Player,
+          attributes: ['id', 'username']
+        }]
+      }]
+    });
+    return game;
+  } catch (error) {
+    return null;
+  }
+}
+
 
 export async function findBoardsByGameId(gameId: number): Promise<Board[] | null> {
   if (!gameId) return null;

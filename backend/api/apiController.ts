@@ -45,6 +45,19 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     }
   });
 
+  socket.on("get_game_data", async (callback) => {
+    if (!callback) return;
+    if (!(socket as any).decoded) return;
+    const { id } = (socket as any).decoded;
+    if (!id) return;
+    const game: SuccessOutput | ErrorOutput = await dataManager.getGameData(id);
+    if (game instanceof SuccessOutput) {
+      callback({ success: true, data: game.data });
+    } else {
+      callback({ success: false, data: null });
+    }
+  })
+
   socket.on("kick_lobby", async (playerId) => {
     if (!playerId) return;
     if (!(socket as any).decoded) return;

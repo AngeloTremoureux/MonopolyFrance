@@ -82,9 +82,6 @@ export class GameComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    console.log(this.boards);
-    console.log(this.board);
-    console.log(this.game);
     this.configGame();
   }
 
@@ -239,7 +236,7 @@ export class GameComponent implements OnInit {
     }
     const planeGeometry: THREE.PlaneGeometry = this.getPlaneGeometry(0.1, 0.1);
     const material = new THREE.MeshBasicMaterial();
-    const texture = await this.textureLoader.loadAsync("/images/game/money.png");
+    const texture = await this.textureLoader.loadAsync("assets/game/money.png");
     material.map = texture;
     material.transparent = true;
     material.opacity = .8;
@@ -469,7 +466,7 @@ export class GameComponent implements OnInit {
    * @returns string Lien absolu vers l'image
    */
   private getHouseImgSrc(level: number, team: number): string {
-    return '/images/game/house' + level + '_' + team + '.png';
+    return 'assets/game/house' + level + '_' + team + '.png';
   }
 
   /**
@@ -916,25 +913,30 @@ export class GameComponent implements OnInit {
    * @returns Promise<void>
    */
   public async configGame(): Promise<void> {
-    this.font = await this.loadAsyncFont('assets/Roboto_Black_Regular.json');
-    const plateau: THREE.Object3D<THREE.Event> = await this.loadAsyncModel('assets/plateau.json');
-    await this.setDefaultsParameters();
-    this.setUpCardNames(plateau);
-    await this.configCardAssets(plateau);
-    await this.configCardMonopoleAssets(plateau);
-    await this.managePurchasedCards(plateau);
-    const liste: any[] = plateau.children[5].children;
-    liste.forEach(Mesh => {
-      this.generateAngleText(Mesh.name, Mesh, true).then((Object) => {
-        this.scene2.add(Object[0])
-        this.scene2.add(Object[1]);
-        this.scene2.add(Object[2]);
+    try {
+      this.font = await this.loadAsyncFont('assets/Roboto_Black_Regular.json');
+      const plateau: THREE.Object3D<THREE.Event> = await this.loadAsyncModel('assets/plateau.json');
+      await this.setDefaultsParameters();
+      this.setUpCardNames(plateau);
+      await this.configCardAssets(plateau);
+      await this.configCardMonopoleAssets(plateau);
+      await this.managePurchasedCards(plateau);
+      const liste: any[] = plateau.children[5].children;
+      liste.forEach(Mesh => {
+        this.generateAngleText(Mesh.name, Mesh, true).then((Object) => {
+          this.scene2.add(Object[0])
+          this.scene2.add(Object[1]);
+          this.scene2.add(Object[2]);
+        });
       });
-    });
-    this.loadCharacters();
-    this.processCharacters();
-    this.createDice(this.scene2);
-    await this.verifOpenModals();
+      this.loadCharacters();
+      this.processCharacters();
+      this.createDice(this.scene2);
+      await this.verifOpenModals();
+    } catch (e) {
+      console.error(e)
+    }
+
   }
 
   /**
@@ -1176,7 +1178,7 @@ export class GameComponent implements OnInit {
    * @returns THREE.Mesh Objet correspondant au joueur
    */
   public createMeshCharacter(team: number): THREE.Mesh {
-    const texture = this.textureLoader.load("/images/characters/1_" + team + ".png");
+    const texture = this.textureLoader.load("assets/characters/1_" + team + ".png");
     const geometry = this.getPlaneGeometry(1, 1);
     const material = new THREE.MeshBasicMaterial();
     material.map = texture;
@@ -1228,25 +1230,25 @@ export class GameComponent implements OnInit {
   public async getTextureByMeshName(name: string): Promise<THREE.Texture> {
     switch (name) {
       case "28":
-        return this.textureLoader.loadAsync("/images/game/tower.png");
+        return this.textureLoader.loadAsync("assets/game/tower.png");
       case "19":
-        return this.textureLoader.loadAsync("/images/game/louvre.png");
+        return this.textureLoader.loadAsync("assets/game/louvre.png");
       case "13":
-        return this.textureLoader.loadAsync("/images/game/park.png");
+        return this.textureLoader.loadAsync("assets/game/park.png");
       case "CHANCE":
-        return this.textureLoader.loadAsync("/images/game/chance3D.png");
+        return this.textureLoader.loadAsync("assets/game/chance3D.png");
       case "TAX":
-        return this.textureLoader.loadAsync("/images/game/tax3D.png");
+        return this.textureLoader.loadAsync("assets/game/tax3D.png");
       case "CORNER_BG START":
-        return this.textureLoader.loadAsync("/images/game/corner.png");
+        return this.textureLoader.loadAsync("assets/game/corner.png");
       case "CORNER_BG CDM":
-        return this.textureLoader.loadAsync("/images/game/cdm.png");
+        return this.textureLoader.loadAsync("assets/game/cdm.png");
       case "CORNER_BG ISLAND":
-        return this.textureLoader.loadAsync("/images/game/playa.png");
+        return this.textureLoader.loadAsync("assets/game/playa.png");
       case "CORNER_BG AVION":
-        return this.textureLoader.loadAsync("/images/game/airport.png");
+        return this.textureLoader.loadAsync("assets/game/airport.png");
       default:
-        return this.textureLoader.loadAsync("/images/game/orsay.png");
+        return this.textureLoader.loadAsync("assets/game/orsay.png");
     }
   }
 
@@ -1304,7 +1306,7 @@ export class GameComponent implements OnInit {
    */
   public async generateHouse(Mesh: THREE.Mesh | THREE.Object3D<THREE.Event>, isRotateNeeds: boolean, color: number, level: number): Promise<THREE.Mesh> {
     const count = Utils.getRandomInt(1, 5);
-    const texture = await this.textureLoader.loadAsync("/images/game/house" + level + "_" + color + ".png");
+    const texture = await this.textureLoader.loadAsync("assets/game/house" + level + "_" + color + ".png");
     const geometry = this.getPlaneGeometry(0.4, 0.4);
     const material = new THREE.MeshBasicMaterial();
     if (isRotateNeeds) {
@@ -1334,41 +1336,43 @@ export class GameComponent implements OnInit {
    * @returns Promise<void>
    */
   private async setDefaultsParameters(): Promise<void> {
-    if (!this.parameters) throw "Erreur";
+    console.log("emit data")
     this.socket.emit('get_game_data', ((data: any) => {
+      console.log("receive data")
       if (!data) return;
+      console.log(data);
 
-    }))
+    }));
 
-    this.parameters.players = [];
-    this.parameters.cards = [];
-    const game: Game = this;
-    this.parameters.playerId = parseInt(playerId);
-    this.parameters.gameId = parseInt(gameId);
-    this.socket.emit("get_cards", (cards: any) => {
-      if (cards) {
-        cards.forEach((card: any) => {
-          const Card_Type: CardType = {
-            id: card.Card_Type.id,
-            nom: card.Card_Type.nom
-          }
-          const purchasePrize: number[] = [];
-          const taxAmount: number[] = [];
-          card.Card_Purchase_Prizes.forEach((prize: any) => {
-            purchasePrize.push(prize.cost)
-          });
-          card.Card_Tax_Amounts.forEach((tax: any) => {
-            taxAmount.push(tax.cost)
-          });
-          const Card_Prize: CardPrizeType = {
-            purchasePrize,
-            taxAmount
-          };
-          if (game.parameters.cards)
-            game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
-        });
-      }
-    });
+    // this.parameters.players = [];
+    // this.parameters.cards = [];
+    // const game: Game = this;
+    // this.parameters.playerId = parseInt(playerId);
+    // this.parameters.gameId = parseInt(gameId);
+    // this.socket.emit("get_cards", (cards: any) => {
+    //   if (cards) {
+    //     cards.forEach((card: any) => {
+    //       const Card_Type: CardType = {
+    //         id: card.Card_Type.id,
+    //         nom: card.Card_Type.nom
+    //       }
+    //       const purchasePrize: number[] = [];
+    //       const taxAmount: number[] = [];
+    //       card.Card_Purchase_Prizes.forEach((prize: any) => {
+    //         purchasePrize.push(prize.cost)
+    //       });
+    //       card.Card_Tax_Amounts.forEach((tax: any) => {
+    //         taxAmount.push(tax.cost)
+    //       });
+    //       const Card_Prize: CardPrizeType = {
+    //         purchasePrize,
+    //         taxAmount
+    //       };
+    //       if (game.parameters.cards)
+    //         game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
+    //     });
+    //   }
+    }
 
   /**
    * Génère le texte d'une case dans un angle
@@ -1490,18 +1494,18 @@ export class GameComponent implements OnInit {
    * @returns Promise<THREE.Object3D | THREE.Mesh | THREE.LOD | THREE.Line | THREE.Points | THREE.Sprite> Modèle
    */
   public async loadAsyncModel(model: string): Promise<THREE.Object3D | THREE.Mesh | THREE.LOD | THREE.Line | THREE.Points | THREE.Sprite> {
-    let obj = await this.loader.loadAsync(model);
-    obj.children[1].children[3].rotation.y = Utils.degrees_to_radians(180);
-    obj.children[3].children[6].rotation.y = Utils.degrees_to_radians(180);
-    this.scene2.add(obj.clone(false));
-    this.scene2.children[0].add(obj.children[0].clone(false));
-    this.scene2.children[0].add(obj.children[1].clone(false));
-    this.scene2.children[0].add(obj.children[2].clone(false));
-    this.scene2.children[0].add(obj.children[3].clone(false));
-    this.scene2.children[0].add(obj.children[4].clone(false));
-    this.scene3.add(obj.clone(false));
-    this.scene.add(obj);
-    return obj;
+    const board: THREE.Object3D = await this.loader.loadAsync(model);
+    board.children[1].children[3].rotation.y = Utils.degrees_to_radians(180);
+    board.children[3].children[6].rotation.y = Utils.degrees_to_radians(180);
+    this.scene2.add(board.clone(false));
+    this.scene2.children[0].add(board.children[0].clone(false));
+    this.scene2.children[0].add(board.children[1].clone(false));
+    this.scene2.children[0].add(board.children[2].clone(false));
+    this.scene2.children[0].add(board.children[3].clone(false));
+    this.scene2.children[0].add(board.children[4].clone(false));
+    this.scene3.add(board.clone(false));
+    this.scene.add(board);
+    return board;
   }
 
   /**

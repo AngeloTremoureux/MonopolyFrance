@@ -81,35 +81,35 @@ export class Game {
    */
   private async setDefaultsParameters(playerId: string, gameId: string): Promise<void> {
     //this.parameters = { };
-    this.parameters.players = [];
-    this.parameters.cards = [];
-    const game: Game = this;
-    this.parameters.playerId = parseInt(playerId);
-    this.parameters.gameId = parseInt(gameId);
-    this.socket.emit("get_cards", (cards: any) => {
-      if (cards) {
-        cards.forEach((card: any) => {
-          const Card_Type: CardType = {
-            id: card.Card_Type.id,
-            nom: card.Card_Type.nom
-          }
-          const purchasePrize: number[] = [];
-          const taxAmount: number[] = [];
-          card.Card_Purchase_Prizes.forEach((prize: any) => {
-            purchasePrize.push(prize.cost)
-          });
-          card.Card_Tax_Amounts.forEach((tax: any) => {
-            taxAmount.push(tax.cost)
-          });
-          const Card_Prize: CardPrizeType = {
-            purchasePrize,
-            taxAmount
-          };
-          if (game.parameters.cards)
-            game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
-        });
-      }
-    });
+    // this.parameters.players = [];
+    // this.parameters.cards = [];
+    // const game: Game = this;
+    // this.parameters.playerId = parseInt(playerId);
+    // this.parameters.gameId = parseInt(gameId);
+    // this.socket.emit("get_cards", (cards: any) => {
+    //   if (cards) {
+    //     cards.forEach((card: any) => {
+    //       const Card_Type: CardType = {
+    //         id: card.Card_Type.id,
+    //         nom: card.Card_Type.nom
+    //       }
+    //       const purchasePrize: number[] = [];
+    //       const taxAmount: number[] = [];
+    //       card.Card_Purchase_Prizes.forEach((prize: any) => {
+    //         purchasePrize.push(prize.cost)
+    //       });
+    //       card.Card_Tax_Amounts.forEach((tax: any) => {
+    //         taxAmount.push(tax.cost)
+    //       });
+    //       const Card_Prize: CardPrizeType = {
+    //         purchasePrize,
+    //         taxAmount
+    //       };
+    //       if (game.parameters.cards)
+    //         game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
+    //     });
+    //   }
+    // });
 
     // const gameData = await this.requestService.getData("game/" + gameId);
     // if (gameData) {
@@ -580,9 +580,9 @@ export class Game {
     }
     const card: Card|undefined = this.parameters.cards[numero];
     this.disableRollsButton();
-    if (card.isVille() || card.isMonument()) {
+    if (card  && card.isVille() || card && card.isMonument()) {
       this.openModalPurchase(numero);
-    } else if (card.isChance()) {
+    } else if (card && card.isChance()) {
       const numChanceCard: number = params.chance;
       this.openChanceCard(numChanceCard);
     } else {
