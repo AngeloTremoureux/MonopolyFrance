@@ -28,7 +28,7 @@ export class Card {
     }
 
     public isOwned(): boolean {
-        return Utils.isset(this.ownerId);
+      return this.ownerId !== null;
     }
 
     public getPosition(): number {

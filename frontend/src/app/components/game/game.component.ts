@@ -4,7 +4,7 @@ import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 import { io, Socket } from "socket.io-client";
 import * as THREE from 'three';
-import { CardType, GameParameters, GameStateDataType, GameType } from 'src/app/classes/types/types';
+import { CardPrizeAmountType, CardPrizeType, CardType, GameParameters, GameStateDataType, GameStateType, GameType } from 'src/app/classes/types/types';
 import { Player } from 'src/app/classes/player/player';
 import { Utils } from 'src/app/classes/utils/utils';
 import { Easing, Tween, update } from '@tweenjs/tween.js';
@@ -19,11 +19,7 @@ import { AudioController } from 'src/app/classes/audio/audio';
 })
 export class GameComponent implements OnInit {
 
-  /** Inputs */
-  @Input() boards!: any;
-  @Input() board!: any;
-  @Input() game!: any;
-
+  @Input() boardId!: number;
   public parameters?: GameParameters;
 
   /** Scenes Layer */
@@ -332,7 +328,7 @@ export class GameComponent implements OnInit {
     let character: Player | null = null;
     let index = 0;
     while (!character && index < this.characters.length) {
-      if (this.characters[index] && this.characters[index].id === id) {
+      if (this.characters[index] && this.characters[index].boardId === id) {
         character = this.characters[index];
       }
       index++;
@@ -888,6 +884,7 @@ export class GameComponent implements OnInit {
     if (!this.parameters) throw "Erreur";
     for (const card of this.parameters.cards) {
       if (card && card.isOwned()) {
+        console.log("is owned", card)
         await this.purchaseCard(plateau, card);
       }
     }
@@ -917,6 +914,7 @@ export class GameComponent implements OnInit {
       this.font = await this.loadAsyncFont('assets/Roboto_Black_Regular.json');
       const plateau: THREE.Object3D<THREE.Event> = await this.loadAsyncModel('assets/plateau.json');
       await this.setDefaultsParameters();
+      console.log(this.parameters);
       this.setUpCardNames(plateau);
       await this.configCardAssets(plateau);
       await this.configCardMonopoleAssets(plateau);
@@ -1331,48 +1329,101 @@ export class GameComponent implements OnInit {
 
   /**
    * Configure les paramètres par défaut du jeu
-   * @param  {string} playerId ID du joueur
-   * @param  {string} gameId ID de la partie
    * @returns Promise<void>
    */
   private async setDefaultsParameters(): Promise<void> {
-    console.log("emit data")
-    this.socket.emit('get_game_data', ((data: any) => {
-      console.log("receive data")
-      if (!data) return;
-      console.log(data);
+    return new Promise(resolve => {
+      try {
+        this.socket.emit('get_game_data', ((data: any) => {
+          if (!data || !data.success) throw "Une erreur est survenue";
+          const objGame = data.data.game;
+          const objCards = data.data.cards;
+          const objStates = data.data.states;
+          const currentClass = this;
+          // Configure players
+          let index: number = 0;
+          const players: Player[] = [];
+          objGame.Boards.forEach((board: any) => {
+            index++;
+            players.push(new Player(currentClass, index, board.id, board.money, board.Player.username, board.Position.numero, false));
+          });
+          const currentBoard = players.find(x => x.boardId === this.boardId);
+          if (!currentBoard) throw "Une erreur est survenue";
+          const current: Player = currentBoard;
+          const boardOwner: Player = players[0];
 
-    }));
+          const playerType = {
+            boardOwner: boardOwner,
+            current: current,
+            list: players
+          }
+          // Configure cards
+          const cards: Card[] = [];
+          objCards.forEach((card: any) => {
+            const cardType: CardType = {
+              id: card.Card_Type.id,
+              nom: card.Card_Type.nom
+            }
+            const cardPurchases: CardPrizeAmountType[] = [];
+            card.Card_Purchase_Prizes.forEach((cardPurchasePrize: any) => {
+              const prizeAmount: CardPrizeAmountType = {
+                id: cardPurchasePrize.id,
+                cost: cardPurchasePrize.cost
+              }
+              cardPurchases.push(prizeAmount);
+            });
+            const cardTax: CardPrizeAmountType[] = [];
+            card.Card_Tax_Amounts.forEach((cardTaxAmount: any) => {
+              const prizeAmount: CardPrizeAmountType = {
+                id: cardTaxAmount.id,
+                cost: cardTaxAmount.cost
+              }
+              cardTax.push(prizeAmount);
+            });
+            const cardPrizeType: CardPrizeType = {
+              purchasePrize: cardPurchases,
+              taxAmount: cardTax
+            }
+            cards.push(new Card(card.id, card.nom, cardType, cardPrizeType, card.color));
+          });
+          // Configure game
+          const states: GameStateDataType[] = [];
+          objStates.forEach((objState: any) => {
+            states.push({
+              id: objState.id,
+              message: objState.message
+            })
+          });
+          const gameStateDataType: GameStateDataType | undefined = states.find(x => x.id === objGame.Game_Setting.GameStateId);
+          if (!gameStateDataType) throw "Une erreur est survenue";
+          const gameState: GameStateType = {
+            current: gameStateDataType,
+            list: states
+          }
+          const game: GameType = {
+            code: objGame.code,
+            id: objGame.id,
+            isOver: objGame.isOver,
+            isStarted: objGame.isStarted,
+            nbPlayers: objGame.Game_Setting.nbPlayers,
+            playerTurn: objGame.Game_Setting.playerTurn,
+            state: gameState,
+            timer: objGame.Game_Setting.timer
+          }
 
-    // this.parameters.players = [];
-    // this.parameters.cards = [];
-    // const game: Game = this;
-    // this.parameters.playerId = parseInt(playerId);
-    // this.parameters.gameId = parseInt(gameId);
-    // this.socket.emit("get_cards", (cards: any) => {
-    //   if (cards) {
-    //     cards.forEach((card: any) => {
-    //       const Card_Type: CardType = {
-    //         id: card.Card_Type.id,
-    //         nom: card.Card_Type.nom
-    //       }
-    //       const purchasePrize: number[] = [];
-    //       const taxAmount: number[] = [];
-    //       card.Card_Purchase_Prizes.forEach((prize: any) => {
-    //         purchasePrize.push(prize.cost)
-    //       });
-    //       card.Card_Tax_Amounts.forEach((tax: any) => {
-    //         taxAmount.push(tax.cost)
-    //       });
-    //       const Card_Prize: CardPrizeType = {
-    //         purchasePrize,
-    //         taxAmount
-    //       };
-    //       if (game.parameters.cards)
-    //         game.parameters.cards[card.id] = new Card(card.id, card.nom, Card_Type, Card_Prize, card.color);
-    //     });
-    //   }
-    }
+          this.parameters = {
+            cards: cards,
+            game: game,
+            player: playerType
+          }
+          resolve();
+        }));
+      } catch (ex) {
+        console.error(ex);
+        resolve()
+      }
+    })
+  }
 
   /**
    * Génère le texte d'une case dans un angle

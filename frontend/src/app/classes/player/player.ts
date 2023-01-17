@@ -2,7 +2,7 @@ import { GameComponent } from "src/app/components/game/game.component";
 import { Utils } from "../utils/utils";
 
 export class Player {
-  public id: number;
+  public boardId: number;
   private money: number;
   public username: string;
   public position: number;
@@ -15,8 +15,8 @@ export class Player {
   private manageQueueState: boolean;
   private moveQueue: number[];
 
-  constructor(game: GameComponent, team: number, id: number, money: number, username: string, position: number, isMyTurn: boolean) {
-      this.id = id;
+  constructor(game: GameComponent, team: number, boardId: number, money: number, username: string, position: number, isMyTurn: boolean) {
+      this.boardId = boardId;
       this.money = money;
       this.username = username;
       this.position = position;

@@ -23,8 +23,8 @@ export type GameType = {
 }
 
 export type CardPrizeType = {
-  purchasePrize: CardPriseAmountType[],
-  taxAmount: CardPriseAmountType[]
+  purchasePrize: CardPrizeAmountType[],
+  taxAmount: CardPrizeAmountType[]
 }
 
 export type GameStateType = {
@@ -37,10 +37,9 @@ export type GameStateDataType = {
   message: string
 }
 
-export type CardPriseAmountType = {
+export type CardPrizeAmountType = {
   id: number,
   cost: number,
-  settings: CardSettingsType,
 }
 
 export type CardType = {

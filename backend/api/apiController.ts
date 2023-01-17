@@ -52,7 +52,8 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     if (!id) return;
     const game: SuccessOutput | ErrorOutput = await dataManager.getGameData(id);
     if (game instanceof SuccessOutput) {
-      callback({ success: true, data: game.data });
+      console.log("game", game);
+      callback({ success: true, data: game.data.gameData });
     } else {
       callback({ success: false, data: null });
     }

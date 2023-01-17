@@ -104,9 +104,9 @@ export async function getGameData(playerId: number): Promise<SuccessOutput | Err
     if (!playerId) throw "Erreur interne au serveur";
     const board: Board|null= await findBoardByPlayerId(playerId);
     if (!board) throw "Erreur interne au serveur";
-    const game: Game|null = await findGameData(board.Game.id);
-    if (!game) throw "Erreur interne au serveur";
-    return new SuccessOutput({ game });
+    const gameData = await findGameData(board.Game.id);
+    if (!gameData || !gameData.game) throw "Erreur interne au serveur";
+    return new SuccessOutput({ gameData });
   } catch (error) {
     return handleError(error);
   }
@@ -251,8 +251,7 @@ export async function findBoardByPlayerId(userId: number): Promise<Board | null>
     return null;
   }
 }
-
-export async function findGameData(gameId: number): Promise<Game | null> {
+export async function findGameData(gameId: number): Promise<{ game: Game|null, cards: CardSettings[], states: GameState[] } | null> {
   try {
     if (!gameId) throw "Erreur interne";
     const game = await Game.findByPk(gameId, {
@@ -268,30 +267,28 @@ export async function findGameData(gameId: number): Promise<Game | null> {
           }]
         }]
       }, {
-        model: GameSettings,
-        include: [{
-          model: GameState
-        }]
+        model: GameSettings
       }, {
         model: Card,
         include: [{
-          model: CardSettings,
-          include: [{
-            model: CardType
-          }, {
-            model: CardTaxAmount
-          }, {
-            model: CardPurchasePrize
-          }, {
-            model: Position
-          }]
-        }, {
           model: Player,
           attributes: ['id', 'username']
         }]
       }]
     });
-    return game;
+    const cards: CardSettings[] = await CardSettings.findAll({
+      include: [{
+        model: CardType
+      }, {
+        model: CardTaxAmount
+      }, {
+        model: CardPurchasePrize
+      }, {
+        model: Position
+      }]
+    });
+    const states: GameState[] = await GameState.findAll();
+    return { game, cards, states };
   } catch (error) {
     return null;
   }
