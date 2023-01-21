@@ -20,7 +20,7 @@ const ERROR_MESSAGES: any = {
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
-  styleUrls: ['./register.component.css']
+  styleUrls: ['./../../global.css', './register.component.css']
 })
 export class RegisterComponent {
 

@@ -8,7 +8,7 @@ import { Clipboard } from '@angular/cdk/clipboard';
 @Component({
   selector: 'app-lobby',
   templateUrl: './lobby.component.html',
-  styleUrls: ['./lobby.component.css']
+  styleUrls: ['./lobby.component.css', './../../global.css']
 })
 export class LobbyComponent implements OnInit{
 
@@ -55,8 +55,7 @@ export class LobbyComponent implements OnInit{
     });
 
     this.socket.on("startGame", () => {
-      alert("started");
-      this.game.isStarted = true;
+      this.router.navigateByUrl("/play");
     });
   }
 

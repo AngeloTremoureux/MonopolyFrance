@@ -8,7 +8,7 @@ class Position extends Model<InferAttributes<Position>, InferCreationAttributes<
   BoardId!: CreationOptional<number>;
   numero!: CreationOptional<number>;
   declare Board: NonAttribute<Board>;
-  declare Card_Settings: NonAttribute<CardSettings[]>;
+  declare Card_Setting: NonAttribute<CardSettings>;
   static associate: (models: any) => void;
 }
 

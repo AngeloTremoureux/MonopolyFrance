@@ -1,1 +1,23 @@
-<p>play works!</p>
+<div id="game" #dom [style.display]="(parameters && parameters.game.isReady) ? 'block' : 'none'"></div>
+<ng-container *ngIf="parameters && parameters.game.isReady">
+  <div class="player-overlay">
+    <div *ngFor="let item of parameters.player.list">
+      <div class="bg-img">
+        <p class="title">{{ item.username }}</p>
+        <div class="money">
+          <span>{{ item.getMoney() }} <img class="money-wrapper" src="/assets/game/money.png"></span>
+        </div>
+        <div class="player-state-wrapper" *ngIf="getPlayerTurn().boardId === item.boardId">
+          {{ getGameState().message }}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="roll-btn" class="middle" *ngIf="parameters.game.playerTurn && isMyTurn() && getGameState().id === 1">
+    <button (click)="onClickRollDice()">Jeter les d&eacute;s</button>
+  </div>
+</ng-container>
+
+
+
+

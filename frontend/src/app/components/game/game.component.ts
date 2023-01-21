@@ -1,9 +1,8 @@
-import { Component, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, Directive, ElementRef, Input, OnInit, Renderer2, ViewChild } from '@angular/core';
 import { SocketService } from 'src/app/services/socket/socket.service';
 import { FontLoader } from 'three/examples/jsm/loaders/FontLoader';
 import { GLTF, GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
-import { io, Socket } from "socket.io-client";
-import * as THREE from 'three';
+import { Socket } from "socket.io-client";
 import { CardPrizeAmountType, CardPrizeType, CardType, GameParameters, GameStateDataType, GameStateType, GameType } from 'src/app/classes/types/types';
 import { Player } from 'src/app/classes/player/player';
 import { Utils } from 'src/app/classes/utils/utils';
@@ -11,15 +10,21 @@ import { Easing, Tween, update } from '@tweenjs/tween.js';
 import { TextGeometry } from 'three/examples/jsm/geometries/TextGeometry';
 import { Card } from 'src/app/classes/card/card';
 import { AudioController } from 'src/app/classes/audio/audio';
+import { ChangeDetectorRef } from '@angular/core';
+import { GameManagerService } from 'src/app/services/gameManager/game-manager.service';
+import * as THREE from 'three';
 
 @Component({
   selector: 'app-game',
   templateUrl: './game.component.html',
   styleUrls: ['./game.component.css']
 })
-export class GameComponent implements OnInit {
+export class GameComponent implements AfterViewInit {
 
-  @Input() boardId!: number;
+  @ViewChild('dom')
+  dom!: ElementRef<HTMLCanvasElement>;
+
+  private boardId: number;
   public parameters?: GameParameters;
 
   /** Scenes Layer */
@@ -32,36 +37,48 @@ export class GameComponent implements OnInit {
   private gltfLoader: GLTFLoader;
   private fontLoader: FontLoader;
   private textureLoader: THREE.TextureLoader;
+  private font: any;
 
   /** Objects */
   private dices: THREE.Group[];
 
   /** Properties */
   private camera: any;
-  private renderer: any;
+  public renderer: any;
   private light: THREE.AmbientLight;
   private basicMaterials: THREE.MeshBasicMaterial[];
   private planeGeometries: THREE.PlaneGeometry[];
 
+  /* Layer's Components displays */
+  public dicesDisplay: boolean = false;
+
+  /* Characters */
   charactersQueue: Player[];
   characters: Player[];
-  font: any;
 
   /** Transport Layer (Socket) */
   private socket: Socket;
 
-  constructor(private socketService: SocketService) {
+  constructor(
+    private socketService: SocketService,
+    private ref: ChangeDetectorRef,
+    private gameManagerService: GameManagerService
+  ) {
+    this.boardId = this.gameManagerService.board.id;
     this.socket = this.socketService.socket;
-
+    this.socket.on("diceRolled", (data) => {
+      const { dice1, dice2, boardId } = data;
+      const { duration1, duration2 } = data.durations;
+      this.rollDice(dice1, dice2, boardId, duration1, duration2);
+    })
     this.scene = new THREE.Scene();
     this.scene2 = new THREE.Scene();
     this.scene3 = new THREE.Scene();
-
     this.loader = new THREE.ObjectLoader();
     this.gltfLoader = new GLTFLoader();
     this.camera = new THREE.OrthographicCamera(-2, 1.5, 0.84, -1, 1, 2000);
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    //this.renderer.outputEncoding = THREE.sRGBEncoding;
+    this.renderer.setClearColor(0x000000, 0);
     this.renderer.autoClear = false;
     this.fontLoader = new FontLoader();
     this.textureLoader = new THREE.TextureLoader();
@@ -78,7 +95,17 @@ export class GameComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.configGame();
+    this.configGame().then(() => {
+      this.animate();
+    });
+    this.ref.detectChanges();
+  }
+
+  ngAfterViewInit() {
+    console.log(this.dom, this.renderer.domElement)
+    const c = this.dom.nativeElement;
+    if (!c) return;
+    c.appendChild(this.renderer.domElement)
   }
 
   /**
@@ -97,55 +124,64 @@ export class GameComponent implements OnInit {
     this.camera.scale.z = 1.9000000000000001;
   }
 
+  public getDomElement() {
+    console.log(this.renderer.domElement, typeof(this.renderer.domElement));
+    return this.renderer.domElement;
+  }
+
   /**
    * Créer et ajoute à la partie les dés
    * @param  {THREE.Scene} scene Partie
    * @returns void
    */
-  public createDice(scene: THREE.Scene): void {
-    const that: GameComponent = this;
-    const dices = this.dices;
-    this.gltfLoader.load('assets/dice/scene.gltf', function (gltf: GLTF) {
-      const dice1 = gltf.scene;
-      dice1.visible = false;
-      dice1.scale.divideScalar(7);
-      const dice2 = dice1.clone();
-      dice2.position.x -= 0.3;
-      dice1.userData['defaultPosition'] = dice1.position;
-      dice2.userData['defaultPosition'] = dice2.position;
-      dices.push(dice1);
-      dices.push(dice2);
-      scene.add(dice1);
-      scene.add(dice2);
-      that.checkPlayerTurn();
-    }, undefined, function (error) {
-      console.error(error);
+  public createDice(scene: THREE.Scene): Promise<void> {
+    return new Promise((resolve) => {
+      const dices = this.dices;
+      this.gltfLoader.load('assets/dice/scene.gltf',  (gltf: GLTF) => {
+        const dice1 = gltf.scene;
+        dice1.visible = false;
+        dice1.scale.divideScalar(7);
+        const dice2 = dice1.clone();
+        dice2.position.x -= 0.3;
+        dice1.userData['defaultPosition'] = dice1.position;
+        dice2.userData['defaultPosition'] = dice2.position;
+        dices.push(dice1);
+        dices.push(dice2);
+        scene.add(dice1);
+        scene.add(dice2);
+        resolve();
+      }, undefined, function (error) {
+        console.error(error);
+      });
     });
   }
 
   /**
    * Active le bouton lancer les dés si c'est au tour du joueur
-   * TODO: Modifier nom de la méthode
    * @returns void
    */
-  public checkPlayerTurn(): void {
-    if (this.parameters?.game.playerTurn && this.isMyTurn() && this.parameters.game.state.current.id === 1) {
+  public updateRollsButton(): void {
+    if (this.parameters?.game.playerTurn && this.isMyTurn() && this.getGameState().id === 1) {
       this.enableRollsButton();
+    } else {
+      this.disableRollsButton();
     }
   }
 
-  private isMyTurn(): boolean | undefined {
+  public isMyTurn(): boolean | undefined {
     if (!this.parameters) throw "Erreur";
-    return this.parameters.player.current.isMyTurn;
+    return this.getCurrentParamPlayer().isMyTurn;
   }
 
-  private getPlayerTurn(): Player | undefined {
+  public getPlayerTurn(): Player {
     if (!this.parameters) throw "Erreur";
-    return this.parameters.player.list.find(x => x.isMyTurn);
+    const turn = this.parameters.player.list.find(x => x.isMyTurn);
+    if (!turn) throw "Erreur";
+    return turn;
   }
 
   public async checkModalState(): Promise<void> {
-    if (this.parameters?.game.playerTurn && this.isMyTurn() && this.parameters.game.state.current.id === 2) {
+    if (this.parameters?.game.playerTurn && this.isMyTurn() && this.getGameState().id === 2) {
       const numCard = await this.getCurrentParamPlayer()?.getNumCase();
       if (numCard) {
         this.manageModalCard(numCard)
@@ -153,23 +189,27 @@ export class GameComponent implements OnInit {
     }
   }
 
-  public setGameState(state: GameStateDataType): void {
+  public setGameState(stateId: number): void {
     if (!this.parameters) throw "Erreur";
-    this.parameters.game.state.current = state;
+    this.parameters.game.state.currentId = stateId;
   }
 
   public getGameState(): GameStateDataType {
     if (!this.parameters) throw "Erreur";
-    return this.parameters.game.state.current;
+    const state = this.parameters.game.state.list.find(x => x.id === this.parameters?.game.state.currentId)
+    if (!state) throw "Erreur";
+    return state;
   }
 
   /**
    * Récupère les informations du joueur
    * @returns Player Le joueur et ses infos
    */
-  public getCurrentParamPlayer(): Player | null {
+  public getCurrentParamPlayer(): Player {
     if (!this.parameters) throw "Erreur";
-    return this.parameters.player.current;
+    const id = this.parameters.player.list.find(x => x.boardId === this.parameters?.player.currentId);
+    if (!id) throw "Erreur";
+    return id;
   }
 
   /**
@@ -226,7 +266,7 @@ export class GameComponent implements OnInit {
   }
 
   public async attachIcon(playerId: number) {
-    const player: Player | null = this.getCharacterById(playerId);
+    const player: Player | undefined = this.getPlayerById(playerId);
     if (!player || !player.character) {
       return;
     }
@@ -267,16 +307,20 @@ export class GameComponent implements OnInit {
     });
   }
 
+  public onClickRollDice() {
+    this.socket.emit("get_click_game_roll");
+  }
+
   /**
    * Lance les dés
    * @param  {number} dice1 Face du dé numéro 1
    * @param  {number} dice2 Face du dé numéro 2
-   * @param  {number} playerId ID du joueur à l'origine du lancé de dé
+   * @param  {number} boardID ID du joueur à l'origine du lancé de dé
    * @param  {number} duration1 Duration de la transition du 1er jet
    * @param  {number} duration2 Face du dé numéro 2
    * @returns void
    */
-  public rollDice(dice1: number, dice2: number, playerId: number, duration1: number, duration2: number): void {
+  private rollDice(dice1: number, dice2: number, boardID: number, duration1: number, duration2: number): void {
     this.disableRollsButton();
     let numero: number = 0;
     let tweenPosition: any;
@@ -312,7 +356,7 @@ export class GameComponent implements OnInit {
       tweenPosition.start();
     });
     tweenPosition.onComplete(function () {
-      const character: Player | null = that.getCharacterById(playerId);
+      const character: Player | undefined = that.getPlayerById(boardID);
       if (character) {
         character.moveTo(totalFace);
       }
@@ -324,16 +368,9 @@ export class GameComponent implements OnInit {
    * @param  {number} id ID du joueur à trouver
    * @returns Player|null Joueur trouvé, null si aucun joueur trouvé
    */
-  public getCharacterById(id: number): Player | null {
-    let character: Player | null = null;
-    let index = 0;
-    while (!character && index < this.characters.length) {
-      if (this.characters[index] && this.characters[index].boardId === id) {
-        character = this.characters[index];
-      }
-      index++;
-    }
-    return character;
+  public getPlayerById(id: number): Player | undefined {
+    if (!this.parameters) return undefined;
+    return this.parameters.player.list.find(x => x.boardId === id);
   }
 
   /**
@@ -835,7 +872,6 @@ export class GameComponent implements OnInit {
       if (Utils.isset(numCase) && !currentCard.isOwned()) {
         level = (currentCard.isMonument()) ? 1 : level;
         if (level) {
-          console.log("ok")
           // TO DO : Condition- If player has enough money
           if (currentCard.prize && currentPlayer.getMoney() - currentCard.prize.purchasePrize[level - 1].cost >= 0) {
             this.socket.emit('try_purchase_card', { level: level });
@@ -884,7 +920,6 @@ export class GameComponent implements OnInit {
     if (!this.parameters) throw "Erreur";
     for (const card of this.parameters.cards) {
       if (card && card.isOwned()) {
-        console.log("is owned", card)
         await this.purchaseCard(plateau, card);
       }
     }
@@ -914,7 +949,6 @@ export class GameComponent implements OnInit {
       this.font = await this.loadAsyncFont('assets/Roboto_Black_Regular.json');
       const plateau: THREE.Object3D<THREE.Event> = await this.loadAsyncModel('assets/plateau.json');
       await this.setDefaultsParameters();
-      console.log(this.parameters);
       this.setUpCardNames(plateau);
       await this.configCardAssets(plateau);
       await this.configCardMonopoleAssets(plateau);
@@ -929,12 +963,14 @@ export class GameComponent implements OnInit {
       });
       this.loadCharacters();
       this.processCharacters();
-      this.createDice(this.scene2);
+      await this.createDice(this.scene2);
+      this.updateRollsButton();
       await this.verifOpenModals();
+      if (!this.parameters) return;
+      this.parameters.game.isReady = true;
     } catch (e) {
       console.error(e)
     }
-
   }
 
   /**
@@ -1145,12 +1181,14 @@ export class GameComponent implements OnInit {
     AudioController.play('CashRegister.mp3');
   }
 
-  public async setCardOwner(numCard: number, level: number, playerId: number): Promise<void> {
-    if (!this.parameters || !numCard || !level || !playerId) return;
+  public async setCardOwner(numCard: number, level: number, boardId: number): Promise<void> {
+    if (!this.parameters || !numCard || !level || !boardId) return;
+    const player = this.getPlayerById(boardId);
+    if (!player) return;
     const card = this.parameters.cards[numCard];
     card.level = level;
-    card.ownerId = playerId;
-    card.owner = this.getCharacterById(playerId);
+    card.ownerId = boardId;
+    card.owner = player;
     await this.purchaseCard(this.scene.children[0], this.parameters.cards[numCard])
   }
 
@@ -1175,20 +1213,25 @@ export class GameComponent implements OnInit {
    * @param  {number} team Numéro de l'équipe
    * @returns THREE.Mesh Objet correspondant au joueur
    */
-  public createMeshCharacter(team: number): THREE.Mesh {
-    const texture = this.textureLoader.load("assets/characters/1_" + team + ".png");
-    const geometry = this.getPlaneGeometry(1, 1);
-    const material = new THREE.MeshBasicMaterial();
-    material.map = texture;
-    material.transparent = true;
-    material.opacity = .6;
-    const plane: any = new THREE.Mesh(geometry, material);
-    plane.position.y = 0.5;
-    plane.rotation.y = Utils.degrees_to_radians(45);
-    plane.position.x = 1.55;
-    plane.position.z = 1.65;
-    plane.userData.numCase = 1;
-    return plane;
+  public createMeshCharacter(team: number): THREE.Mesh | undefined {
+    try {
+      const texture = this.textureLoader.load("assets/characters/1_" + team + ".png");
+      const geometry = this.getPlaneGeometry(1, 1);
+      const material = new THREE.MeshBasicMaterial();
+      material.map = texture;
+      material.transparent = true;
+      material.opacity = .6;
+      const plane: any = new THREE.Mesh(geometry, material);
+      plane.position.y = 0.5;
+      plane.rotation.y = Utils.degrees_to_radians(45);
+      plane.position.x = 1.55;
+      plane.position.z = 1.65;
+      plane.userData.numCase = 1;
+      return plane;
+    } catch (ex) {
+      alert(ex);
+      return undefined;
+    }
   }
 
   /**
@@ -1197,6 +1240,7 @@ export class GameComponent implements OnInit {
    * @returns void
    */
   public addCharacter(character: Player): void {
+    console.log("add character");
     if (this.scene3.children[0] && character.character) {
       this.scene3.children[0].add(character.character);
       this.characters.push(character);
@@ -1335,6 +1379,7 @@ export class GameComponent implements OnInit {
     return new Promise(resolve => {
       try {
         this.socket.emit('get_game_data', ((data: any) => {
+          console.log(data);
           if (!data || !data.success) throw "Une erreur est survenue";
           const objGame = data.data.game;
           const objCards = data.data.cards;
@@ -1345,16 +1390,17 @@ export class GameComponent implements OnInit {
           const players: Player[] = [];
           objGame.Boards.forEach((board: any) => {
             index++;
+            console.log("board" + index, board);
             players.push(new Player(currentClass, index, board.id, board.money, board.Player.username, board.Position.numero, false));
           });
+          players[objGame.Game_Setting.playerTurn - 1].isMyTurn = true;
           const currentBoard = players.find(x => x.boardId === this.boardId);
           if (!currentBoard) throw "Une erreur est survenue";
-          const current: Player = currentBoard;
-          const boardOwner: Player = players[0];
-
+          const current: number = this.boardId;
+          const boardOwner: number = players[0].boardId;
           const playerType = {
-            boardOwner: boardOwner,
-            current: current,
+            boardOwnerId: boardOwner,
+            currentId: current,
             list: players
           }
           // Configure cards
@@ -1397,7 +1443,7 @@ export class GameComponent implements OnInit {
           const gameStateDataType: GameStateDataType | undefined = states.find(x => x.id === objGame.Game_Setting.GameStateId);
           if (!gameStateDataType) throw "Une erreur est survenue";
           const gameState: GameStateType = {
-            current: gameStateDataType,
+            currentId: gameStateDataType.id,
             list: states
           }
           const game: GameType = {
@@ -1408,7 +1454,8 @@ export class GameComponent implements OnInit {
             nbPlayers: objGame.Game_Setting.nbPlayers,
             playerTurn: objGame.Game_Setting.playerTurn,
             state: gameState,
-            timer: objGame.Game_Setting.timer
+            timer: objGame.Game_Setting.timer,
+            isReady: false
           }
 
           this.parameters = {
@@ -1537,6 +1584,7 @@ export class GameComponent implements OnInit {
     this.renderer.clearDepth();
     this.renderer.render(this.scene3, this.camera);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
+    //requestAnimationFrame(() => this.animate());
   }
 
   /**

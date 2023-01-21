@@ -5,8 +5,8 @@ export type GameParameters = {
   game: GameType,
   player: {
     list: Player[],
-    boardOwner: Player
-    current: Player
+    boardOwnerId: number
+    currentId: number
   }
   cards: Card[]
 }
@@ -20,6 +20,7 @@ export type GameType = {
   playerTurn: Player
   nbPlayers: number
   state: GameStateType
+  isReady: boolean
 }
 
 export type CardPrizeType = {
@@ -29,7 +30,7 @@ export type CardPrizeType = {
 
 export type GameStateType = {
   list: GameStateDataType[]
-  current: GameStateDataType
+  currentId: number
 }
 
 export type GameStateDataType = {

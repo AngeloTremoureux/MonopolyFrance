@@ -2,6 +2,7 @@ import { DataTypes, Model, Optional, ModelCtor, ModelStatic, CreationOptional, I
 import { sequelize } from '.';
 import Game from './game';
 import Player from './player';
+import Position from './position';
 
 class Board extends Model<InferAttributes<Board>, InferCreationAttributes<Board>> {
   id!: CreationOptional<number>;
@@ -12,6 +13,7 @@ class Board extends Model<InferAttributes<Board>, InferCreationAttributes<Board>
   PlayerId!: CreationOptional<number>;
   declare Game: NonAttribute<Game>;
   declare Player: NonAttribute<Player>;
+  declare Position: NonAttribute<Position>;
   static associate: (models: any) => void;
 }
 
@@ -57,6 +59,7 @@ Board.associate = function (models) {
   Board.belongsTo(models.Game);
   Board.belongsTo(models.Player);
   Board.hasOne(models.Position);
+  Board.hasMany(models.Card);
 };
 
 export default Board;

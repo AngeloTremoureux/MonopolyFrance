@@ -39,7 +39,6 @@ Player.init({
 
 Player.associate = function (models) {
   Player.hasOne(models.Board);
-  Player.hasMany(models.Card);
 };
 
 export default Player;

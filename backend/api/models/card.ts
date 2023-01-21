@@ -1,5 +1,6 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
+import Board from './board';
 import CardSettings from './card-settings';
 import Game from './game';
 import Player from './player';
@@ -9,10 +10,10 @@ class Card extends Model<InferAttributes<Card>, InferCreationAttributes<Card>> {
   level!: number;
   CardSettingsId!: CreationOptional<number>;
   GameId!: CreationOptional<number>;
-  PlayerId!: CreationOptional<number>;
+  BoardId!: CreationOptional<number>;
   declare Card_Setting: NonAttribute<CardSettings>;
   declare Games: NonAttribute<Game[]>;
-  declare Players: NonAttribute<Player[]>;
+  declare Board: NonAttribute<Board>;
   static associate: (models: any) => void;
 }
 
@@ -39,11 +40,11 @@ Card.init({
       key: 'id'
     }
   },
-  PlayerId: {
+  BoardId: {
     type: DataTypes.INTEGER,
     allowNull: true,
     references: {
-      model: Player,
+      model: Board,
       key: 'id'
     }
   }
@@ -56,7 +57,7 @@ Card.init({
 Card.associate = function (models) {
   Card.belongsTo(models.Card_Settings);
   Card.belongsTo(models.Game);
-  Card.belongsTo(models.Player);
+  Card.belongsTo(models.Board);
 };
 
 export default Card;

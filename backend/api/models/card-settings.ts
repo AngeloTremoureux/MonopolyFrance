@@ -7,7 +7,7 @@ class CardSettings extends Model<InferAttributes<CardSettings>, InferCreationAtt
   nom!: string;
   color!: number;
   CardTypeId!: CreationOptional<number>;
-  declare CardTypes: NonAttribute<CardType[]>;
+  declare Card_Type: NonAttribute<CardType>;
   static associate: (models: any) => void;
 }
 

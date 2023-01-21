@@ -18,7 +18,7 @@ const ERROR_MESSAGES: any = {
 @Component({
   selector: 'app-login',
   templateUrl: './login.component.html',
-  styleUrls: ['./login.component.css']
+  styleUrls: ['./../../global.css', './login.component.css']
 })
 export class LoginComponent {
   private socket: Socket;

@@ -1,5 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
+import { GameComponent } from './components/game/game.component';
 import { IndexComponent } from './components/index/index.component';
 import { JoinComponent } from './components/join/join.component';
 import { LobbyComponent } from './components/lobby/lobby.component';
@@ -15,7 +16,8 @@ const routes: Routes = [
   { path: 'login', component: LoginComponent},
   { path: 'register', component: RegisterComponent},
   { path: 'lobby', component: LobbyComponent, canActivate: [AuthGuard, GameGuard]},
-  { path: 'refresh', component: IndexComponent}
+  { path: 'refresh', component: IndexComponent},
+  { path: 'play', component: GameComponent, canActivate: [AuthGuard, GameGuard]}
 ];
 
 @NgModule({

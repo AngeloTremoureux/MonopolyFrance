@@ -6,10 +6,7 @@ import { GameManagerService } from 'src/app/services/gameManager/game-manager.se
 @Component({
   selector: 'app-index',
   templateUrl: './index.component.html',
-  styleUrls: [
-    './index.component.css',
-    './../../app.component.css'
-  ],
+  styleUrls: ['./index.component.css', './../../global.css' ],
   encapsulation: ViewEncapsulation.None,
 })
 export class IndexComponent {

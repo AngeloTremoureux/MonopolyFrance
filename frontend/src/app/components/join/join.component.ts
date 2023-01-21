@@ -5,7 +5,7 @@ import { SocketService } from 'src/app/services/socket/socket.service';
 @Component({
   selector: 'app-join',
   templateUrl: './join.component.html',
-  styleUrls: ['./join.component.css']
+  styleUrls: ['./join.component.css', './../../global.css']
 })
 export class JoinComponent {
   clicked: boolean = false;

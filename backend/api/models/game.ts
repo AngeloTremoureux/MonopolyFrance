@@ -1,6 +1,7 @@
 import { CreationOptional, DataTypes, HasManyGetAssociationsMixin, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
 import Board from './board';
+import GameSettings from './game-settings';
 import Player from './player';
 
 class Game extends Model<InferAttributes<Game>, InferCreationAttributes<Game>> {
@@ -10,6 +11,7 @@ class Game extends Model<InferAttributes<Game>, InferCreationAttributes<Game>> {
   isStarted!: CreationOptional<boolean>;
   declare Player: NonAttribute<Player>;
   declare Boards: NonAttribute<Board[]>;
+  declare Game_Setting: NonAttribute<GameSettings>;
   declare getBoards: HasManyGetAssociationsMixin<Board>;
   static associate: (models: any) => void;
 }
