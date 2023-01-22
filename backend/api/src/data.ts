@@ -68,6 +68,49 @@ export async function addPlayerToGame(userId: number, code: string): Promise<Suc
     return handleError(error);
   }
 }
+
+export async function changePlayerTurn(gameSettingsId: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!gameSettingsId) throw "Erreur interne au serveur";
+    const gameSetting = await GameSettings.findByPk(gameSettingsId);
+    if (!gameSetting) throw "Erreur interne";
+    if (gameSetting.playerTurn + 1 <= gameSetting.nbPlayers) {
+      gameSetting.playerTurn++;
+    } else {
+      gameSetting.playerTurn = 1;
+    }
+    await gameSetting.save();
+    return new SuccessOutput({ playerTurn: gameSetting.playerTurn });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
+export async function changePlayerTurnByBoardId(boardId: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!boardId) throw "Erreur interne au serveur";
+    const board = await Board.findByPk(boardId, {
+      include: [{
+        model: Game,
+        include: [{
+          model: GameSettings
+        }]
+      }]
+    });
+    if (!board) throw "Erreur interne";
+    if (board.Game.Game_Setting.playerTurn + 1 <= board.Game.Game_Setting.nbPlayers) {
+      board.Game.Game_Setting.playerTurn++;
+    } else {
+      board.Game.Game_Setting.playerTurn = 1;
+    }
+    board.Game.Game_Setting.GameStateId = 1;
+    await board.Game.Game_Setting.save();
+    return new SuccessOutput({ playerTurn: board.Game.Game_Setting.playerTurn });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
 export async function startGame(playerId: number): Promise<SuccessOutput | ErrorOutput> {
   try {
     if (!playerId) throw "Erreur interne au serveur";
@@ -331,6 +374,8 @@ export async function findBoardAdvancedByPlayerId(userId: number): Promise<Board
         }, {
           model: Board
         }]
+      }, {
+        model: Position
       }]
     });
     return board;
@@ -390,6 +435,11 @@ export async function findCurrentCardInGameOfPlayer(boardId: number): Promise<Ca
         CardSettingsId: board.Position.numero
       },
       include: [{
+        model: Game,
+        include: [{
+          model: GameSettings
+        }]
+      }, {
         model: CardSettings,
         include: [{
           model: CardType
@@ -424,6 +474,19 @@ export async function findPositionByBoardId(boardId: number): Promise<Position |
   }
 }
 
+export async function addMoney(boardId: number, money: number): Promise<SuccessOutput | ErrorOutput> {
+  try {
+    if (!boardId || !money) throw "Erreur interne";
+    const board: Board | null = await findBoardByBoardId(boardId);
+    if (!board) throw "Erreur interne";
+    board.money += money;
+    await board.save();
+    return new SuccessOutput({ isNegativeBalance: false, money: board.money });
+  } catch (error) {
+    return handleError(error);
+  }
+}
+
 export async function withdrawMoney(boardId: number, money: number): Promise<SuccessOutput | ErrorOutput> {
   try {
     if (!boardId || !money) throw "Erreur interne";
@@ -443,7 +506,7 @@ export async function withdrawMoney(boardId: number, money: number): Promise<Suc
   }
 }
 
-export async function findCardById(id: number): Promise<CardSettings | null> {
+export async function findCardSettingById(id: number): Promise<CardSettings | null> {
   if (!id) return null;
   try {
     const card = await CardSettings.findByPk(id, {

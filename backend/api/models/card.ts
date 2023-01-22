@@ -12,7 +12,7 @@ class Card extends Model<InferAttributes<Card>, InferCreationAttributes<Card>> {
   GameId!: CreationOptional<number>;
   BoardId!: CreationOptional<number>;
   declare Card_Setting: NonAttribute<CardSettings>;
-  declare Games: NonAttribute<Game[]>;
+  declare Game: NonAttribute<Game>;
   declare Board: NonAttribute<Board>;
   static associate: (models: any) => void;
 }

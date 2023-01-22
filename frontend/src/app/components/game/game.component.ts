@@ -48,6 +48,7 @@ export class GameComponent implements AfterViewInit {
   private light: THREE.AmbientLight;
   private basicMaterials: THREE.MeshBasicMaterial[];
   private planeGeometries: THREE.PlaneGeometry[];
+  public modal: any;
 
   /* Layer's Components displays */
   public dicesDisplay: boolean = false;
@@ -66,11 +67,9 @@ export class GameComponent implements AfterViewInit {
   ) {
     this.boardId = this.gameManagerService.board.id;
     this.socket = this.socketService.socket;
-    this.socket.on("diceRolled", (data) => {
-      const { dice1, dice2, boardId } = data;
-      const { duration1, duration2 } = data.durations;
-      this.rollDice(dice1, dice2, boardId, duration1, duration2);
-    })
+    this.socket.onAny((eventName: string, ...args: any) => {
+      this.manageSocket(eventName, args);
+    });
     this.scene = new THREE.Scene();
     this.scene2 = new THREE.Scene();
     this.scene3 = new THREE.Scene();
@@ -92,6 +91,42 @@ export class GameComponent implements AfterViewInit {
     this.charactersQueue = [];
     this.characters = [];
     this.setDefaultCameraPosition();
+  }
+
+  private manageSocket(eventName: string, data: any): void {
+    switch (eventName) {
+      case "diceRolled": {
+        const { dice1, dice2, boardId }  = data;
+        const { duration1, duration2 }   = data.durations;
+        const { Game_Setting, Position } = data.config;
+        this.setGameState(Game_Setting.GameStateId);
+        if (!this.parameters) return;
+        const player = this.getPlayerById(boardId);
+        if (!player) return;
+        player.position = Position
+        this.rollDice(dice1, dice2, boardId, duration1, duration2);
+      } break;
+      case "open_modal": {
+        const { id, numero, parameters } = data;
+        if (this.getCurrentParamPlayer().boardId !== id) return;
+        if (parameters && parameters.chance) {
+          this.openModalPurchase(numero);
+        } else {
+          this.openChanceCard(numero);
+        }
+      } break;
+      case "update_turn": {
+        if (!this.parameters) return;
+        this.parameters.game.playerTurn = this.parameters.player.list[data.turn - 1];
+      } break;
+      case "set_money": {
+        const { id, amount } = data;
+        this.getPlayerById(id)?.setMoney(amount);
+      } break;
+      default:
+        console.error(eventName);
+        break;
+    }
   }
 
   ngOnInit(): void {
@@ -328,6 +363,7 @@ export class GameComponent implements AfterViewInit {
     const that: GameComponent = this;
     this.enableDices();
     this.dices.forEach(dice => {
+      console.log("dice", dice)
       numero++;
       const diceObject = this.getDiceObject(dice);
       const defaultPosition: THREE.Vector3 = dice.userData['defaultPosition'];
@@ -345,6 +381,7 @@ export class GameComponent implements AfterViewInit {
       const positionX: number = (numero === 2) ? defaultPosition.x - Math.floor(Math.random() * 11 + 3) : defaultPosition.x;
       const positionZ: number = (numero === 2) ? defaultPosition.z : defaultPosition.z - Math.floor(Math.random() * 11 + 3);
       const positionY: number = Math.floor(Math.random() * 3 + 3);
+      console.log("dice1", diceObject)
       const tweenRotation: Tween<THREE.Euler> = new Tween(diceObject.rotation)
         .to({ x: rotationX, y: rotationY, z: rotationZ }, 1050);
       const duration = (numero === 2) ? duration2 : duration1;
@@ -498,7 +535,7 @@ export class GameComponent implements AfterViewInit {
    * @param  {number} team Numéro correspondant à l'équipe
    * @returns string Lien absolu vers l'image
    */
-  private getHouseImgSrc(level: number, team: number): string {
+  public getHouseImgSrc(level: number, team: number): string {
     return 'assets/game/house' + level + '_' + team + '.png';
   }
 
@@ -507,7 +544,7 @@ export class GameComponent implements AfterViewInit {
    * @param  {number} level Niveau de la maison de 1 à 4
    * @returns string Nom du type
    */
-  private getHouseTypeName(level: number): string {
+  public getHouseTypeName(level: number): string {
     switch (level) {
       case 1:
         return 'Bourg';
@@ -571,6 +608,26 @@ export class GameComponent implements AfterViewInit {
     // });
   }
 
+  public nFormatter(number: number): string {
+    return number.toFixed(0).replace(/\d(?=(\d{3})+$)/g, '$&,');
+  }
+
+  chooseCardLevel(event: Event, card: number): boolean {
+    const checkboxs: HTMLCollectionOf<any> = document.getElementsByClassName("checkbox-prizes");
+    for (let index = 0; index < 4; index++) {
+      if (index > card) {
+        checkboxs[index].checked = false;
+        if (this.modal.types[index]) this.modal.types[index].checked = false;
+      } else {
+        checkboxs[index].checked = true;
+        if (this.modal.types[index]) this.modal.types[index].checked = true;
+      }
+    }
+    this.modal['current'] = card;
+    if (card === 0) return false;
+    return true;
+  }
+
   /**
    * Ouvre le menu d'achat d'un emplacement
    * TODO: Contenu méthode à optimiser
@@ -581,6 +638,28 @@ export class GameComponent implements AfterViewInit {
    * @returns void
    */
   public openModalPurchase(numero: number): void {
+    this.modal = [];
+    if (!this.parameters) return;
+    const card = this.parameters.cards.find(x => x.getPosition() === numero);
+    if (!card || !card.prize || !card.prize.purchasePrize[0] || !card.prize.taxAmount[0]) return;
+    this.modal["name"] = card.getNom();
+    this.modal["current"] = 0;
+    this.modal["types"] = [];
+    if (card.isVille()) {
+      for (let index = 1; index <= 4; index++) {
+        if (!card.prize || !card.prize.purchasePrize[index - 1]) return;
+        this.modal['types'].push({
+          imgSrc: this.getHouseImgSrc(index, this.getCurrentParamPlayer().team),
+          prize: Utils.nFormatter(card.prize.purchasePrize[index - 1].cost),
+          tax: Utils.nFormatter(card.prize.taxAmount[index - 1].cost),
+          disabled: (this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1].cost) < 0,
+          balance: Utils.nFormatter(this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1].cost),
+          checked: index === 1
+        });
+      }
+    }
+
+
     // if (!this.parameters.cards) {
     //   return;
     // }
@@ -599,12 +678,8 @@ export class GameComponent implements AfterViewInit {
     //   for (let index = 1; index <= 4; index++) {
     //     const isDisabled: string = (this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1] < 0) ? 'disabled' : '';
     //     const isCheckedByDefault: string = (index === 1) ? ' checked ' : '';
-    //     const elementHTML: string = "<div class='col-3 " + isDisabled + "'><label>"
-    //       + "<input type='checkbox' " + isDisabled
-    //       + isCheckedByDefault + "><span class='checkmark fa-solid'></span><span>"
-    //       + this.getHouseTypeName(index)
-    //       + "</span></label></div>";
-    //     $("#card-detail .row.types").append(elementHTML);
+
+
     //   }
     //   $("#card-detail .name-content-wrapper").text(card.getNom());
     //   $("#card-detail .rent-content-wrapper").text(Utils.nFormatter(card.prize.taxAmount[0]));
@@ -1143,6 +1218,7 @@ export class GameComponent implements AfterViewInit {
    * @returns Promise<void>
    */
   public async moveCharacterBy(player: Player, nbCases: number): Promise<void> {
+    console.log("move character by !" + nbCases);
     const character: THREE.Mesh<THREE.BufferGeometry, THREE.Material | THREE.Material[]> | undefined = player.character;
     if (!character) {
       return;
@@ -1163,7 +1239,7 @@ export class GameComponent implements AfterViewInit {
         } else {
           that.disableDices();
           if (that.isMyTurn()) {
-            that.socket.emit('game_end_move');
+            that.socket.emit('set_game_end_move');
           }
           that.getPlayerTurn()?.getNumCase().then((numCase) => {
             if (!that.parameters) return;
@@ -1178,7 +1254,7 @@ export class GameComponent implements AfterViewInit {
   }
 
   public playCashRegister(): void {
-    AudioController.play('CashRegister.mp3');
+    AudioController.play('assets/sounds/CashRegister.mp3');
   }
 
   public async setCardOwner(numCard: number, level: number, boardId: number): Promise<void> {
@@ -1584,7 +1660,7 @@ export class GameComponent implements AfterViewInit {
     this.renderer.clearDepth();
     this.renderer.render(this.scene3, this.camera);
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    //requestAnimationFrame(() => this.animate());
+    requestAnimationFrame(() => this.animate());
   }
 
   /**
@@ -1605,6 +1681,10 @@ export class GameComponent implements AfterViewInit {
     this.scene3.add(board.clone(false));
     this.scene.add(board);
     return board;
+  }
+
+  public closeModal() {
+    this.modal = null;
   }
 
   /**

@@ -34,7 +34,6 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     // Verification
     const board: SuccessOutput | ErrorOutput = await dataManager.getGameByPlayerId(id);
     if (board instanceof SuccessOutput) {
-      console.log("p=", board.data.Player)
       socket.join(board.data.game.id);
       // Broadcast
       socket.rooms.forEach((room: any) => {
@@ -54,7 +53,6 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     const { id } = (socket as any).decoded;
     if (!id) return;
     const game: SuccessOutput | ErrorOutput = await dataManager.getGameData(id);
-    console.log(game);
     if (game instanceof SuccessOutput) {
       callback({ success: true, data: game.data.gameData });
     } else {
@@ -62,67 +60,92 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     }
   });
 
-  socket.on("get_game_end_move", async () => {
+  socket.on("set_game_end_move", async () => {
     if (!(socket as any).decoded) return;
     const { id } = (socket as any).decoded;
     if (!id) return;
     const position: Position | null = await dataManager.findPositionByBoardId(id);
     const card: Card | null = await dataManager.findCurrentCardInGameOfPlayer(id);
     if (!position) return;
-    // if (card && (position.Card_Setting.CardTypeId === 1 || position.Card_Setting.CardTypeId === 2)) {
-    //   // TO DO : Case is already owned by other player
-    //   const cardLevel = card.level;
-    //   if (card) {
-    //     socket.emit('open_modal', { numero: currentNumCard.numero, params: {} });
-    //   } else {
-    //     await dataManager.removeMoneyFromPlayer(socket, boardId, Card.Card_Setting.Card_Tax_Amounts[level - 1].cost);
-    //     await dataManager.changePlayerTurn(currentNumCard.Board.Game.Game_Setting);
-    //   }
-    //   // Remove card tax prize from account balance of player
-    // } else {
-    //   let turn;
-    //   const Game_Settings = currentNumCard.Board.Game.Game_Setting;
-    //   switch (cardTypeId) {
-    //     // Case 3 : Starting card
-    //     case 3:
-    //       turn = await changePlayerTurn(Game_Settings);
-    //       socket.to(gameId).emit('update_turn', { turn });
-    //       socket.emit('update_turn', { turn });
-    //       break;
-    //     // Case 4 : Lost island card
-    //     case 4:
-    //       turn = await changePlayerTurn(Game_Settings);
-    //       socket.to(gameId).emit('update_turn', { turn });
-    //       socket.emit('update_turn', { turn });
-    //       break;
-    //     // Case 5 : World Cup
-    //     case 5:
-    //       turn = await changePlayerTurn(Game_Settings);
-    //       socket.to(gameId).emit('update_turn', { turn });
-    //       socket.emit('update_turn', { turn });
-    //       break;
-    //     // Case 6 : Aeroport card
-    //     case 6:
-    //       turn = await changePlayerTurn(Game_Settings);
-    //       socket.to(gameId).emit('update_turn', { turn });
-    //       socket.emit('update_turn', { turn });
-    //       break;
-    //     // Case 7 : Chance card
-    //     case 7:
-    //       const chanceCardNumber = Math.floor(Math.random() * 10 + 1);
-    //       socket.emit('open_modal', { numero: currentNumCard.numero, params: { chance: chanceCardNumber } });
-    //       break;
-    //     case 8:
-    //       const taxAmount = 50000;
-    //       removeMoneyFromPlayer(socket, boardId, taxAmount);
-    //       socket.to(gameId).emit('tax_player', { player: playerId, amount: taxAmount });
-    //       socket.emit('tax_player', { player: playerId, amount: taxAmount });
-    //       break;
-    //     // Others (City or monument)
-    //     default:
-    //       socket.emit('open_modal', { numero: currentNumCard.numero, params: {} });
-    //   }
-    // }
+    // S'il existe une construction sur la case actuelle
+    if (card && (position.Card_Setting.CardTypeId === 1 || position.Card_Setting.CardTypeId === 2)) {
+      const room: any = card.GameId;
+      // TO DO : Case is already owned by other player
+      if (card.BoardId === id) {
+        io.to(room).emit("open_modal", { id: id, numero: card.CardSettingsId });
+      } else {
+        const cardLevel = card.level;
+        const money = await dataManager.withdrawMoney(id, card.Card_Setting.Card_Tax_Amounts[cardLevel - 1].cost);
+        if (money instanceof SuccessOutput) {
+          io.to(room).emit("set_money", { id: id, amount: money.data.money });
+        }
+        const turn = dataManager.changePlayerTurn(card.Game.Game_Setting.id);
+        if (turn instanceof SuccessOutput) {
+          io.to(room).emit("update_turn", { turn: turn.data.playerTurn });
+        }
+      }
+      // Remove card tax prize from account balance of player
+    } else {
+      // Si la case est libre
+      let turn;
+      const board: Board | null = await dataManager.findBoardByBoardId(id);
+      if (!board) return;
+      const currentCard = await dataManager.findCardSettingById(board.Position.numero);
+      if (!currentCard) return;
+      const groupId: any = board.GameId
+      switch (currentCard.CardTypeId) {
+        // Case 3 : Starting card
+        case 3:
+          const prize = 50000;
+          const money = await dataManager.addMoney(id, prize);
+          if (money instanceof SuccessOutput) {
+            socket.rooms.forEach((room: any) => {
+              if (Number.isInteger(room)) {
+                io.to(room).emit("set_money", { id: id, amount: money.data.money });
+              }
+            });
+          }
+          turn = await dataManager.changePlayerTurnByBoardId(id);
+          if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
+          break;
+        // Case 4 : Lost island card
+        case 4:
+          turn = await dataManager.changePlayerTurnByBoardId(id);
+          if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
+          break;
+        // Case 5 : World Cup
+        case 5:
+          turn = await dataManager.changePlayerTurnByBoardId(id);
+          if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
+          break;
+        // Case 6 : Aeroport card
+        case 6:
+          turn = await dataManager.changePlayerTurnByBoardId(id);
+          if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
+          break;
+        // Case 7 : Chance card
+        case 7:
+          const chanceCardNumber = Math.floor(Math.random() * 10 + 1);
+          socket.emit('open_modal', { id: id, numero: position.numero, parameters: { chance: chanceCardNumber } });
+          break;
+        case 8:
+          const taxAmount = 50000;
+          dataManager.withdrawMoney(id, taxAmount);
+          socket.rooms.forEach((room: any) => {
+            if (Number.isInteger(room)) {
+              io.to(room).emit("set_money", { id: id, amount: taxAmount });
+            }
+          });
+          break;
+        // Others (City or monument)
+        default:
+          socket.rooms.forEach((room: any) => {
+            if (Number.isInteger(room)) {
+              io.to(room).emit("open_modal", { id: id, numero: position.numero });
+            }
+          });
+      }
+    }
   });
 
   socket.on("get_click_game_roll", async () => {
@@ -137,19 +160,22 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     await dataManager.setPlayerPosition(board.id, face1 + face2);
     // Change GameState
     board.Game.Game_Setting.GameStateId = 3;
-    board.Game.Game_Setting.save();
-
-    // // Change PlayerTurn
-    // const sizeOfGame = board.Game.Boards.length;
-    // if (board.Game.Game_Setting.playerTurn + 1 <= sizeOfGame) {
-    //   board.Game.Game_Setting.playerTurn++;
-    // } else {
-    //   board.Game.Game_Setting.playerTurn = 1;
-    // }
+    await board.Game.Game_Setting.save();
+    await board.reload();
     const durationPosition1 = Math.floor(Math.random() * 1120 + 1080);
     const durationPosition2 = Math.floor(Math.random() * 1120 + 1080);
     const durations = { durationPosition1, durationPosition2 };
-    io.to(board.GameId.toString()).emit("diceRolled", { boardId: board.id, dice1: face1, dice2: face2, durations });
+    const gameId = board.GameId
+    io.to((gameId as any)).emit("diceRolled", {
+      boardId: board.id,
+      dice1: face1,
+      dice2: face2,
+      durations,
+      config: {
+        Game_Setting: board.Game.Game_Setting,
+        Position: board.Position.numero
+      }
+    });
   });
 
   socket.on("kick_lobby", async (playerId) => {

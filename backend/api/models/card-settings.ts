@@ -1,13 +1,21 @@
 import { CreationOptional, DataTypes, InferAttributes, InferCreationAttributes, Model, NonAttribute, Optional } from 'sequelize';
 import { sequelize } from '.';
+import Card from './card';
+import CardPurchasePrize from './card-purchase-prize';
+import CardTaxAmount from './card-tax-amount';
 import CardType from './card-type';
+import Position from './position';
 
 class CardSettings extends Model<InferAttributes<CardSettings>, InferCreationAttributes<CardSettings>> {
   id!: CreationOptional<number>;
   nom!: string;
   color!: number;
   CardTypeId!: CreationOptional<number>;
+  declare Card: NonAttribute<Card>;
   declare Card_Type: NonAttribute<CardType>;
+  declare Card_Purchase_Prizes: NonAttribute<CardPurchasePrize[]>;
+  declare Card_Tax_Amounts: NonAttribute<CardTaxAmount[]>;
+  declare Positions: NonAttribute<Position[]>;
   static associate: (models: any) => void;
 }
 

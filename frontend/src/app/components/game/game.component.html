@@ -1,3 +1,4 @@
+<div [hidden]="!modal" id="bg-wrapper-dark"></div>
 <div id="game" #dom [style.display]="(parameters && parameters.game.isReady) ? 'block' : 'none'"></div>
 <ng-container *ngIf="parameters && parameters.game.isReady">
   <div class="player-overlay">
@@ -5,9 +6,9 @@
       <div class="bg-img">
         <p class="title">{{ item.username }}</p>
         <div class="money">
-          <span>{{ item.getMoney() }} <img class="money-wrapper" src="/assets/game/money.png"></span>
+          <span>{{ nFormatter(item.getMoney()) }} <img class="money-wrapper" src="/assets/game/money.png"></span>
         </div>
-        <div class="player-state-wrapper" *ngIf="getPlayerTurn().boardId === item.boardId">
+        <div class="player-state-wrapper" *ngIf="getPlayerTurn().boardId === item.boardId && getGameState().message">
           {{ getGameState().message }}
         </div>
       </div>
@@ -16,8 +17,67 @@
   <div id="roll-btn" class="middle" *ngIf="parameters.game.playerTurn && isMyTurn() && getGameState().id === 1">
     <button (click)="onClickRollDice()">Jeter les d&eacute;s</button>
   </div>
+  <div id="card-detail" class="card-detail-overlay middle" *ngIf="modal">
+    <div class="name">
+      <div class="title-card-wrapper">
+        <span class="name-content-wrapper">Acheter {{ modal.name }}</span>
+        <div class="close-wrapper">
+          <i class="fa-solid fa-xmark" (click)="closeModal()"></i>
+        </div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="container-fluid">
+        <div class="row houses justify-content-center">
+          <div class='col-3' *ngFor="let item of modal.types">
+            <img draggable="false" [attr.src]="item.imgSrc" [ngClass]="item.disabled ? 'disabled' : null">
+          </div>
+        </div>
+        <div class="row types">
+          <ng-container *ngFor="let item of modal.types; index as i">
+            <div class="col-3" [ngClass]="modal.types[i+1] && modal.types[i+1].checked ? 'selected' : null">
+              <label class="w-100">
+                <input type='checkbox' class="checkbox-prizes" [attr.disabled]="item.disabled ? '' : null"
+                  [attr.checked]="item.checked ? '' : null" (click)="chooseCardLevel($event, i)">
+                <span class='checkmark fa-solid' [ngClass]="item.disabled ? 'disabled' : null"></span>
+                <span>{{ getHouseTypeName(i+1) }}</span>
+              </label>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+    <div class="info">
+      <span>
+        🔹Coût d'achat:&#160;
+        <div class="float-end">
+          <b>{{ modal.types[modal['current']].prize }}</b>
+          <img draggable="false" class="money-wrapper" src='/assets/game/money.png'>
+        </div>
+      </span>
+      <br>
+      <span>
+        🔹Loyer:&#160;
+        <div class="float-end">
+          <b>{{ modal.types[modal['current']].tax }}</b>
+          <img draggable="false" class="money-wrapper" src='/assets/game/money.png'>
+        </div>
+      </span>
+      <br>
+      <span>
+        🔹Solde restant:&#160;
+        <div class="float-end">
+          <b>{{ modal.types[modal['current']].balance }}</b>
+          <img class="money-wrapper" src='/assets/game/money.png'>
+        </div>
+      </span>
+      <hr>
+      <div class="d-grid gap-2">
+        <button class="btn btn-primary btn-block">
+          Acheter pour {{ modal.types[modal['current']].prize }}
+        </button>
+      </div>
+
+    </div>
+  </div>
 </ng-container>
-
-
-
-

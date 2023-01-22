@@ -133,6 +133,7 @@
   font-family: 'Roboto Mono', sans-serif;
   min-width: 560px;
   max-width: 560px;
+  z-index: 2;
 }
 
 #card-detail .types {
@@ -161,13 +162,12 @@
 }
 
 #card-detail .types .checkmark:after {
-  content: "\f00c";
+  content: "\f0c8";
   width: inherit;
   height: inherit;
   font-size: 21px;
   padding-top: 2px;
-  color: #3bfd38;
-  text-shadow: 1px 1px 1px black, -1px -1px 1px black;
+  color: #787878;
   background: #c9c9c9;
 }
 
@@ -178,6 +178,34 @@
   background-color: #eee;
   cursor: pointer;
   margin: auto;
+  border: 1px #d1d1d1 solid
+}
+#card-detail .types {
+  transition: 1s;
+}
+#card-detail .types::after {
+  content: "";
+  height: 5px;
+  position: absolute;
+  background: #eeeeee;
+  z-index: -2;
+  left: 80px;
+  top: 196px;
+  right: 80px;
+  border: 1px #c7c7c7 solid;
+  transition: 1s;
+}
+
+#card-detail .types .col-3.selected::after {
+  content: "";
+  height: 4px;
+  position: absolute;
+  background: #afddf9;
+  z-index: -1;
+  width: 130px;
+  margin-left: -45px;
+  margin-top: 12px;
+  border: 1px #00d9ff solid;
 }
 
 #card-detail .title-card-wrapper {
@@ -188,8 +216,8 @@
 }
 
 #card-detail .close-wrapper {
-  right: -25px;
-  top: 0px;
+  right: -15px;
+  bottom: -6px;
   position: absolute;
   font-size: 30px;
   color: #720000;
@@ -202,11 +230,12 @@
   right: 0;
   bottom: 0;
   background: #2a2a2ad6;
+  z-index: 1;
 }
 
 #card-detail .name:before {
   content: "";
-  background: url(/images/game/banner.png);
+  background: url(/assets/game/banner.png);
   height: 86px;
   z-index: -1;
   position: absolute;
@@ -230,7 +259,7 @@
   color: #ffffff96;
 }
 
-#card-detail .types .col-3:not(.disabled) .checkmark:hover {
+#card-detail .types .col-3 .checkmark:not(.disabled):hover {
   background-color: #ccc;
 }
 
