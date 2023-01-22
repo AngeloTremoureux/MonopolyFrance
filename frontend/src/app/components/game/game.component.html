@@ -28,23 +28,39 @@
     </div>
     <div class="group">
       <div class="container-fluid">
-        <div class="row houses justify-content-center">
-          <div class='col-3' *ngFor="let item of modal.types">
-            <img draggable="false" [attr.src]="item.imgSrc" [ngClass]="item.disabled ? 'disabled' : null">
-          </div>
-        </div>
-        <div class="row types">
-          <ng-container *ngFor="let item of modal.types; index as i">
-            <div class="col-3" [ngClass]="modal.types[i+1] && modal.types[i+1].checked ? 'selected' : null">
-              <label class="w-100">
-                <input type='checkbox' class="checkbox-prizes" [attr.disabled]="item.disabled ? '' : null"
-                  [attr.checked]="item.checked ? '' : null" (click)="chooseCardLevel($event, i)">
-                <span class='checkmark fa-solid' [ngClass]="item.disabled ? 'disabled' : null"></span>
-                <span>{{ getHouseTypeName(i+1) }}</span>
-              </label>
+        <ng-container *ngIf="modal.type === 'city'; else houseTemplate">
+          <div class="row houses justify-content-center">
+            <div class='col-3' *ngFor="let item of modal.types">
+              <img draggable="false" [attr.src]="item.imgSrc" [ngClass]="item.disabled ? 'disabled' : null">
             </div>
-          </ng-container>
-        </div>
+          </div>
+        </ng-container>
+        <ng-template #houseTemplate>
+          <div class="row houses justify-content-center">
+            <div [ngClass]="'monument-illustration monument-' + modal.position"></div>
+          </div>
+        </ng-template>
+        <ng-container *ngIf="modal.type === 'city'; else typeTemplate">
+          <div class="row types city">
+            <ng-container *ngFor="let item of modal.types; index as i">
+              <div class="col-3" [ngClass]="modal.types[i+1] && modal.types[i+1].checked ? 'selected' : null">
+                <label class="w-100">
+                  <input type='checkbox' class="checkbox-prizes" [attr.disabled]="item.disabled ? '' : null"
+                    [attr.checked]="item.checked ? '' : null" (click)="chooseCardLevel($event, i)">
+                  <span class='checkmark fa-solid' [ngClass]="item.disabled ? 'disabled' : null"></span>
+                  <span>{{ getHouseTypeName(i+1) }}</span>
+                </label>
+              </div>
+            </ng-container>
+          </div>
+        </ng-container>
+        <ng-template #typeTemplate>
+          <div class="row types">
+            <p class='text-left' style='text-transform: none'>
+              <em>La taxe de la case augmente proportionnellement en fonction du nombre de monument possédé</em>
+            </p>
+          </div>
+        </ng-template>
       </div>
     </div>
     <div class="info">
@@ -73,11 +89,10 @@
       </span>
       <hr>
       <div class="d-grid gap-2">
-        <button class="btn btn-primary btn-block">
+        <button class="btn btn-primary btn-block" (click)="tryBuyCurrentHouse()">
           Acheter pour {{ modal.types[modal['current']].prize }}
         </button>
       </div>
-
     </div>
   </div>
 </ng-container>

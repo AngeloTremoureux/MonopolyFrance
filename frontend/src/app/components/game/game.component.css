@@ -52,7 +52,7 @@
   transform: rotateX(0deg);
   font-size: 2rem;
   border: 2px gray solid;
-  background: url(/images/game/chance.png), white;
+  background: url(/assets/game/chance.png), white;
   background-size: cover;
   background-position-x: center;
   animation: loadCard 2s cubic-bezier(0.260, 1.185, 0.635, 0.670) 1;
@@ -96,11 +96,11 @@
 }
 
 #card-detail .monument-illustration.monument-5 {
-  background: url("/images/game/orsay.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
+  background: url("/assets/game/orsay.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
 }
 
 #card-detail .monument-illustration.monument-13 {
-  background: url("/images/game/park.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
+  background: url("/assets/game/park.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
 }
 
 #card-detail .group img.disabled {
@@ -110,11 +110,11 @@
 }
 
 #card-detail .monument-illustration.monument-19 {
-  background: url("/images/game/louvre.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
+  background: url("/assets/game/louvre.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
 }
 
 #card-detail .monument-illustration.monument-28 {
-  background: url("/images/game/tower.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
+  background: url("/assets/game/tower.png"), radial-gradient(#b8e6ff, #97c2e7) !important;
 }
 
 #card-detail .group .houses .monument-illustration {
@@ -180,10 +180,7 @@
   margin: auto;
   border: 1px #d1d1d1 solid
 }
-#card-detail .types {
-  transition: 1s;
-}
-#card-detail .types::after {
+#card-detail .types.city::after {
   content: "";
   height: 5px;
   position: absolute;

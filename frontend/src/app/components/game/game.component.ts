@@ -638,25 +638,45 @@ export class GameComponent implements AfterViewInit {
    * @returns void
    */
   public openModalPurchase(numero: number): void {
-    this.modal = [];
-    if (!this.parameters) return;
-    const card = this.parameters.cards.find(x => x.getPosition() === numero);
-    if (!card || !card.prize || !card.prize.purchasePrize[0] || !card.prize.taxAmount[0]) return;
-    this.modal["name"] = card.getNom();
-    this.modal["current"] = 0;
-    this.modal["types"] = [];
-    if (card.isVille()) {
-      for (let index = 1; index <= 4; index++) {
-        if (!card.prize || !card.prize.purchasePrize[index - 1]) return;
+    try {
+      this.modal = [];
+      if (!this.parameters) throw "";
+      const card = this.parameters.cards.find(x => x.getPosition() === numero);
+      if (!card || !card.prize || !card.prize.purchasePrize[0] || !card.prize.taxAmount[0]) throw "";
+      if (card.prize.purchasePrize[0].cost > this.getCurrentParamPlayer().getMoney()) throw "";
+      this.modal["position"] = numero;
+      this.modal["name"] = card.getNom();
+      this.modal["current"] = 0;
+      this.modal["types"] = [];
+      if (card.isVille()) {
+        this.modal["type"] = "city";
+        for (let index = 1; index <= 4; index++) {
+          if (!card.prize || !card.prize.purchasePrize[index - 1]) throw "";
+          this.modal['types'].push({
+            level: index,
+            imgSrc: this.getHouseImgSrc(index, this.getCurrentParamPlayer().team),
+            prize: Utils.nFormatter(card.prize.purchasePrize[index - 1].cost),
+            tax: Utils.nFormatter(card.prize.taxAmount[index - 1].cost),
+            disabled: (this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1].cost) < 0,
+            balance: Utils.nFormatter(this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1].cost),
+            checked: index === 1
+          });
+        }
+      } else if (card.isMonument()) {
+        this.modal["type"] = "monument";
         this.modal['types'].push({
-          imgSrc: this.getHouseImgSrc(index, this.getCurrentParamPlayer().team),
-          prize: Utils.nFormatter(card.prize.purchasePrize[index - 1].cost),
-          tax: Utils.nFormatter(card.prize.taxAmount[index - 1].cost),
-          disabled: (this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1].cost) < 0,
-          balance: Utils.nFormatter(this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[index - 1].cost),
-          checked: index === 1
+          level: 1,
+          prize: Utils.nFormatter(card.prize.purchasePrize[0].cost),
+          tax: Utils.nFormatter(card.prize.taxAmount[0].cost),
+          disabled: (this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[0].cost) < 0,
+          balance: Utils.nFormatter(this.getCurrentParamPlayer().getMoney() - card.prize.purchasePrize[0].cost),
+          checked: true
         });
+      } else {
+        return;
       }
+    } catch (exception) {
+      this.modal = null;
     }
 
 
@@ -935,17 +955,21 @@ export class GameComponent implements AfterViewInit {
    * @param  {number} level
    * @return void
    */
-  public async tryBuyCurrentHouse(level: number) {
+  public async tryBuyCurrentHouse() {
     if (!this.parameters) throw "Erreur";
     // TO DO : Condition- If player turn
     if (this.isMyTurn()) {
+      const card = this.modal.types.findLast((x: any) => x.checked === true);
+      if (!card) return;
+      const level = card.level;
+      console.log("level:", level);
       // TO DO : Condition- If place is not owned
       const currentPlayer: Player | null = this.getCurrentParamPlayer();
       if (!currentPlayer || !this.parameters.cards) return;
       const numCase: number = await currentPlayer.getNumCase();
       const currentCard: Card = this.parameters.cards[numCase];
       if (Utils.isset(numCase) && !currentCard.isOwned()) {
-        level = (currentCard.isMonument()) ? 1 : level;
+        //level = (currentCard.isMonument()) ? 1 : level;
         if (level) {
           // TO DO : Condition- If player has enough money
           if (currentCard.prize && currentPlayer.getMoney() - currentCard.prize.purchasePrize[level - 1].cost >= 0) {
