@@ -60,6 +60,30 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
     }
   });
 
+  async function checkIfGameExistsAndIsMyTurnAndGetBoard(socket: Socket): Promise<null | Board> {
+    if (!(socket as any).decoded) return null;
+    const { id } = (socket as any).decoded;
+    if (!id) return null;
+    const board: Board | null = await dataManager.findBoardAdvancedByPlayerId(id);
+    if (!board) return null;
+    if (!board || board.Game.isOver || !board.Game.isStarted || board.Game.Boards[board.Game.Game_Setting.playerTurn - 1].PlayerId !== id) return null;
+    return board;
+  }
+
+  socket.on("set_end_turn", async () => {
+    const board: Board | null = await checkIfGameExistsAndIsMyTurnAndGetBoard(socket);
+    if (!board) return;
+    if (board.Game.Game_Setting.GameStateId !== 2) return;
+    console.log("?")
+    const room: any = board.GameId;
+    const turn = await dataManager.changePlayerTurnAndGameState(board.Game.Game_Setting.id);
+    console.log("reply:", turn)
+    if (turn instanceof SuccessOutput) {
+      console.log("emit to", room)
+      io.to(room).emit("update_turn", { turn: turn.data.playerTurn });
+    }
+  })
+
   socket.on("set_game_end_move", async () => {
     if (!(socket as any).decoded) return;
     const { id } = (socket as any).decoded;
@@ -79,7 +103,7 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
         if (money instanceof SuccessOutput) {
           io.to(room).emit("set_money", { id: id, amount: money.data.money });
         }
-        const turn = dataManager.changePlayerTurn(card.Game.Game_Setting.id);
+        const turn = dataManager.changePlayerTurnAndGameState(card.Game.Game_Setting.id);
         if (turn instanceof SuccessOutput) {
           io.to(room).emit("update_turn", { turn: turn.data.playerTurn });
         }
@@ -105,22 +129,22 @@ export async function handleSocket(socket: Socket, io: Server<any, any, DefaultE
               }
             });
           }
-          turn = await dataManager.changePlayerTurnByBoardId(id);
+          turn = await dataManager.changePlayerTurnAndGameStateByBoardId(id);
           if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
           break;
         // Case 4 : Lost island card
         case 4:
-          turn = await dataManager.changePlayerTurnByBoardId(id);
+          turn = await dataManager.changePlayerTurnAndGameStateByBoardId(id);
           if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
           break;
         // Case 5 : World Cup
         case 5:
-          turn = await dataManager.changePlayerTurnByBoardId(id);
+          turn = await dataManager.changePlayerTurnAndGameStateByBoardId(id);
           if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
           break;
         // Case 6 : Aeroport card
         case 6:
-          turn = await dataManager.changePlayerTurnByBoardId(id);
+          turn = await dataManager.changePlayerTurnAndGameStateByBoardId(id);
           if (turn instanceof SuccessOutput) io.to(groupId).emit('update_turn', { turn: turn.data.playerTurn });
           break;
         // Case 7 : Chance card

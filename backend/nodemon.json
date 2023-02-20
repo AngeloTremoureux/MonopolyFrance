@@ -1,0 +1,11 @@
+{
+  "verbose": true,
+  "watch": [
+    "api/",
+    "package.json",
+    "nodemon.json",
+    "tsconfig.json",
+    "tokens/"
+  ],
+  "ext": "json,js,ts"
+}

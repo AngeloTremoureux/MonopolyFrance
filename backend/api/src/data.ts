@@ -69,16 +69,17 @@ export async function addPlayerToGame(userId: number, code: string): Promise<Suc
   }
 }
 
-export async function changePlayerTurn(gameSettingsId: number): Promise<SuccessOutput | ErrorOutput> {
+export async function changePlayerTurnAndGameState(gameSettingsId: number): Promise<SuccessOutput | ErrorOutput> {
   try {
     if (!gameSettingsId) throw "Erreur interne au serveur";
-    const gameSetting = await GameSettings.findByPk(gameSettingsId);
+    const gameSetting: GameSettings | null = await GameSettings.findByPk(gameSettingsId);
     if (!gameSetting) throw "Erreur interne";
     if (gameSetting.playerTurn + 1 <= gameSetting.nbPlayers) {
       gameSetting.playerTurn++;
     } else {
       gameSetting.playerTurn = 1;
     }
+    gameSetting.GameStateId = 1;
     await gameSetting.save();
     return new SuccessOutput({ playerTurn: gameSetting.playerTurn });
   } catch (error) {
@@ -86,7 +87,7 @@ export async function changePlayerTurn(gameSettingsId: number): Promise<SuccessO
   }
 }
 
-export async function changePlayerTurnByBoardId(boardId: number): Promise<SuccessOutput | ErrorOutput> {
+export async function changePlayerTurnAndGameStateByBoardId(boardId: number): Promise<SuccessOutput | ErrorOutput> {
   try {
     if (!boardId) throw "Erreur interne au serveur";
     const board = await Board.findByPk(boardId, {

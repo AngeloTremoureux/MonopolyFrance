@@ -68,7 +68,8 @@ export class GameComponent implements AfterViewInit {
     this.boardId = this.gameManagerService.board.id;
     this.socket = this.socketService.socket;
     this.socket.onAny((eventName: string, ...args: any) => {
-      this.manageSocket(eventName, args);
+      console.log(args);
+      this.manageSocket(eventName, args[0]);
     });
     this.scene = new THREE.Scene();
     this.scene2 = new THREE.Scene();
@@ -116,8 +117,12 @@ export class GameComponent implements AfterViewInit {
         }
       } break;
       case "update_turn": {
+        console.log("update turn yet")
         if (!this.parameters) return;
-        this.parameters.game.playerTurn = this.parameters.player.list[data.turn - 1];
+        this.closeModal();
+        this.setGameState(1);
+        const player: Player | undefined = this.getPlayerByQueuePosition(data.turn);
+        if (player) this.setPlayerTurn(player.boardId);
       } break;
       case "set_money": {
         const { id, amount } = data;
@@ -206,6 +211,16 @@ export class GameComponent implements AfterViewInit {
   public isMyTurn(): boolean | undefined {
     if (!this.parameters) throw "Erreur";
     return this.getCurrentParamPlayer().isMyTurn;
+  }
+
+  public setPlayerTurn(boardId: number): void {
+    if (!this.parameters) throw "Erreur";
+    const turn = this.parameters.player.list.find(x => x.isMyTurn);
+    if (turn) turn.isMyTurn = false;
+    const newTurn = this.parameters.player.list.find(x => x.boardId === boardId);
+    if (newTurn) newTurn.isMyTurn = true;
+    console.log("turn updated", newTurn, boardId)
+
   }
 
   public getPlayerTurn(): Player {
@@ -408,6 +423,11 @@ export class GameComponent implements AfterViewInit {
   public getPlayerById(id: number): Player | undefined {
     if (!this.parameters) return undefined;
     return this.parameters.player.list.find(x => x.boardId === id);
+  }
+
+  public getPlayerByQueuePosition(nb: number): Player | undefined {
+    if (!this.parameters) return undefined;
+    return this.parameters.player.list[nb-1];
   }
 
   /**
@@ -1693,6 +1713,7 @@ export class GameComponent implements AfterViewInit {
    * @returns Promise<THREE.Object3D | THREE.Mesh | THREE.LOD | THREE.Line | THREE.Points | THREE.Sprite> Modèle
    */
   public async loadAsyncModel(model: string): Promise<THREE.Object3D | THREE.Mesh | THREE.LOD | THREE.Line | THREE.Points | THREE.Sprite> {
+    console.log("load " , model)
     const board: THREE.Object3D = await this.loader.loadAsync(model);
     board.children[1].children[3].rotation.y = Utils.degrees_to_radians(180);
     board.children[3].children[6].rotation.y = Utils.degrees_to_radians(180);
@@ -1709,6 +1730,7 @@ export class GameComponent implements AfterViewInit {
 
   public closeModal() {
     this.modal = null;
+    this.socket.emit("set_end_turn");
   }
 
   /**
